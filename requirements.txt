@@ -5,4 +5,4 @@ fluids
 tqdm
 jupyter
 rope
-pylint
+pylint==2.3.1
