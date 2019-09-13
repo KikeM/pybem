@@ -48,4 +48,6 @@ bem.load_propeller(r_hub, r_tip, r, beta)
 # Test!
 phi = bem.compute_inflow_angle(r_tip)
 
-assert(phi != np.nan)
+loads = bem.compute_loads()
+
+assert(loads['T'][-1]>0)
