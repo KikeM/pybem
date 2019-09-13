@@ -4,5 +4,5 @@ scipy=1.3.*
 fluids
 tqdm
 jupyter
-rope
+rope==0.14.0
 pylint
