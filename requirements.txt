@@ -3,6 +3,6 @@ pandas=0.25.*
 scipy=1.3.*
 fluids
 tqdm
-jupyter
+jupyter==1.0.0
 rope
 pylint
