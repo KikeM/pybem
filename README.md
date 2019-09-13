@@ -1,6 +1,8 @@
 # pybem
 Blade Element Method implementation for propeller calculations.
 
+[![Build Status](https://travis-ci.org/KikeM/pybem.svg?branch=master)](https://travis-ci.org/KikeM/pybem)
+
 ## Quickstart
 
 ```python
