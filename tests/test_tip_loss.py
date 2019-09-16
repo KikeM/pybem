@@ -49,6 +49,6 @@ bem.set_tip_loss(True)
 # Test!
 phi = bem.compute_inflow_angle(r_tip)
 
-loads = bem.compute_loads()
+loads = bem.compute_loads(dr = 0.0001)
 
-assert(loads['T'][-1]>0)
+assert(loads['T_hat'][-1]>0)
