@@ -44,6 +44,7 @@ r    = np.linspace(r_hub, r_tip)
 bem.load_airfoil(alpha, cl_alpha, cd_polar)
 bem.load_flight_conditions(V_inf, omega, altitude = 10000)
 bem.load_propeller(r_hub, r_tip, r, beta, 4)
+bem.set_tip_loss(False)
 
 # Test!
 phi = bem.compute_inflow_angle(r_tip)
