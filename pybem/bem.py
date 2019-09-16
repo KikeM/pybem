@@ -141,7 +141,7 @@ class BladeElementMethod():
         q_inf = 4 * pi * self.flight.atmosphere.rho * (self.flight.v)**2.0
 
         r_space = np.linspace(_r_hub, _r_tip, N)
-        phi_space = []
+        phi_space = [1.2 * self.propeller.beta(_r_hub)]
         F_space = []
 
 
@@ -149,7 +149,7 @@ class BladeElementMethod():
         for r in r_space[0:]:
 
             # Compute induction angle
-            phi = self.compute_inflow_angle(r)
+            phi = self.compute_inflow_angle(r, phi_space[idx])
             
             # Compute induction coefficients
             axi = self.induction_axial(r, phi, self.beta)
@@ -200,7 +200,7 @@ class BladeElementMethod():
         result['T_hat'] = T_hat
         result['Q_hat'] = Q_hat
         result['F']     = F_space
-        result['phi']   = phi_space
+        result['phi']   = phi_space[1:]
 
         return result
 
