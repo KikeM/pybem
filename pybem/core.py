@@ -59,10 +59,9 @@ class Airfoil():
         cl: float
             Interpolation based on lift polar.
         """
-
         self.alpha = alpha
         _cl        = self.interpolant_cl(alpha).item()
-        self._cl    = _cl
+        self._cl   = _cl
 
         return _cl
 
@@ -79,9 +78,8 @@ class Airfoil():
         cd: float
             Interpolation based on drag polar.
         """
-
         self._cl = cl
-        _cd     = self.interpolant_cd(cl).item()
+        _cd      = self.interpolant_cd(cl).item()
         self._cd = _cd
 
         return _cd
@@ -89,20 +87,23 @@ class Airfoil():
 
 class Propeller():
 
-    def __init__(self, r_hub:float, r_tip:float, r_loc, beta_dist):
+    def __init__(self, r_hub:float, r_tip:float, r_dist, beta_dist, chord_dist):
 
         # Get blade bounds
         self.r_hub = r_hub
         self.r_tip = r_tip
 
         # Get airfoil properties
-        self.twist_distribution = beta_dist
-        self.r_stations         = r_loc
+        self.dist_twist = beta_dist
+        self.dist_chord = chord_dist
+        self.dist_r     = r_dist
 
-        self.interpolant_twist = interp1d(r_loc, beta_dist)
+        self.interpolant_twist = interp1d(r_dist, beta_dist)
+        self.interpolant_chord = interp1d(r_dist, chord_dist)
 
-        self.r     = None
-        self._beta = None
+        self.r      = None
+        self._beta  = None
+        self._chord = None
 
     def beta(self, r):
         """
@@ -111,15 +112,38 @@ class Propeller():
         Parameters
         ----------
         r: float
-            Location in meters.
+            Location based on r_loc.
 
         Returns
         -------
         beta: float
         """
+        self.r     = r
         
-        self.r    = r
-        _beta     = self.interpolant_twist(r).item()
+        _beta      = self.interpolant_twist(r).item()
+        
         self._beta = _beta
 
         return _beta
+
+    def chord(self, r):
+        """
+        Airfoil chord at location r.
+
+        Parameters
+        ----------
+        r: float
+            Location based on r_loc.
+
+        Returns
+        -------
+        chord: float
+        """
+        self.r      = r
+        
+        _chord      = self.interpolant_chord(r).item()
+        
+        self._chord = _chord
+
+        return _chord
+
