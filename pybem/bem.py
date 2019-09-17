@@ -239,7 +239,10 @@ class BladeElementMethod():
         C_Q = [0.0]
 
         # Initial condition is 20% larger than the twist angle
-        phi_space = [1.2 * self.propeller.beta(r_space[0])]
+        phi0 = np.arctan(_J/_r_hub)
+        phi0 = np.rad2deg(phi0)
+        
+        phi_space = [phi0]
         F_space   = []
 
         idx = 0 # Index to control numpy arrays
