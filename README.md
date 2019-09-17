@@ -8,14 +8,13 @@ Blade Element Method implementation for propeller calculations.
 ## Quickstart
 
 ```python
+import matplotlib.pyplot as plt
+
 import numpy as np
-
-
 from pybem import BladeElementMethod
 
 bem = BladeElementMethod()
     
-
 # Quick polar
 # -----------------------------
 def cl(alpha):
@@ -28,7 +27,7 @@ def cd(cl):
     
     return 0.012 + 0.05 * cl**2
 
-alpha = np.linspace(-20, 20, 50)
+alpha = np.linspace(-40, 40, 50)
 alpha_r = np.deg2rad(alpha)
 
 cl_alpha = cl(alpha_r)
@@ -36,28 +35,31 @@ cd_polar = cd(cl_alpha)
 
 # -------------------------------
 
-# Airspeed
-V_inf = 300 # km/h
-
-# Rotation
-omega = 2700 # rpm
-
 # Lenghts
-D = 2.032 # meters
-r_tip = D / 2
-r_hub = r_tip * 0.2
+D = 0.152 * 2 # meters
+r_tip = D / 2.0
+r_hub = r_tip * 0.15 
 
 # Propeller
 # ---------------------------------
-beta = np.linspace(60, 40)
 r    = np.linspace(r_hub, r_tip)
+beta = np.linspace(80, 50)
+chord = 0.2 * r
 # ---------------------------------
 
-# Load data
+# Load airfoil
 bem.load_airfoil(alpha, cl_alpha, cd_polar)
-bem.load_flight_conditions(V_inf, omega, altitude = 10000)
-bem.load_propeller(r_hub, r_tip, r, beta)
+
+# Load advance ratio
+J = 1
+bem.load_similarity(J = J)
+
+prop = bem.load_propeller(dist_r=r, dist_beta=beta, dist_chord = chord, n_blades = 4)
+bem.set_tip_loss(True)
 
 # Test!
-bem.compute_inflow_angle(r_tip)
+_r = r[25] / D
+phi0 = np.arctan(J/_r)
+phi0 = np.rad2deg(phi0)
+phi = bem.compute_inflow_angle(_r, phi0)
 ```
