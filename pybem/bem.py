@@ -125,10 +125,10 @@ class BladeElementMethod():
         _cl = self.airfoil.cl(alpha)
         _cd = self.airfoil.cd(_cl)
         
-        num = 4.0 * _F * (np.sin(_phi))**2.0
-        den = _solidity * (_cl * np.cos(_phi) - _cd * np.sin(_phi))
+        NUM = 4.0 * _F * (np.sin(_phi))**2.0
+        DEN = _solidity * (_cl * np.cos(_phi) - _cd * np.sin(_phi))
         
-        frac = num / den - 1
+        frac = NUM / DEN - 1
         
         return 1.0 / frac
 
@@ -147,16 +147,16 @@ class BladeElementMethod():
         _cl = self.airfoil.cl(alpha)
         _cd = self.airfoil.cd(_cl)
         
-        num = 4.0 * F * np.sin(_phi) * np.cos(_phi)
-        den = solidity * (_cl * np.sin(_phi) - _cd * np.cos(_phi))
+        NUM = 4.0 * F * np.sin(_phi) * np.cos(_phi)
+        DEN = solidity * (_cl * np.sin(_phi) - _cd * np.cos(_phi))
         
-        frac = num / den + 1
+        frac = NUM / DEN + 1
         
         return 1.0 / frac
 
     def solidity(self, r):
         """
-        Local element solidity
+        Local element solidity.
 
         Parameters
         ----------
@@ -172,7 +172,7 @@ class BladeElementMethod():
         _chord = self.propeller.chord(r)
 
         NUM = _B * _chord
-        DEN = 2.0 * pi * r * _D
+        DEN = 2.0 * pi * (r * _D)
 
         return NUM / DEN 
 
@@ -227,8 +227,6 @@ class BladeElementMethod():
         # Number of steps
         N  = np.floor((_r_tip - _r_hub) / dr)
     
-        print(f"Using {N} stations")
-
         # Create nondimensional radius distribution
         r_space = np.linspace(start = _r_hub, 
                               stop  = _r_tip, 
@@ -243,7 +241,7 @@ class BladeElementMethod():
         phi0 = np.rad2deg(phi0)
         
         phi_space = [phi0]
-        F_space   = []
+        F_space   = [1.0]
 
         idx = 0 # Index to control numpy arrays
         for r in r_space[:-1]:
@@ -288,7 +286,7 @@ class BladeElementMethod():
         result['C_T'] = C_T
         result['C_Q'] = C_Q
         result['F']   = F_space
-        result['phi'] = phi_space[1:]
+        result['phi'] = phi_space
 
         return result
 
