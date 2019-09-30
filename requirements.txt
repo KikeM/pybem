@@ -5,4 +5,4 @@ fluids==0.1.75
 tqdm==4.36.0
 jupyter
 rope==0.14.0
-pylint
+pylint==2.4.2
