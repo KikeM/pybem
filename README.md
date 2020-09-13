@@ -7,7 +7,7 @@ Blade Element Method implementation for propeller calculations.
 
 ## Iteration process
 
-![Iteration steps](iteration_process.png)
+![Robust Iteration steps](iteration_process.png)
 
 ## Quickstart
 
