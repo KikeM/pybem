@@ -6,8 +6,7 @@ from scipy.optimize import newton_krylov
 from pybem import Airfoil, FlightConditions, Propeller
 
 
-class BladeElementMethod():
-
+class BladeElementMethod:
     def __init__(self):
 
         # Flight conditions
@@ -19,12 +18,12 @@ class BladeElementMethod():
         # Propeller
         self.propeller = None
 
-        self.F        = 1
+        self.F = 1
 
         self.beta = None
-        self.r    = None
-        self.dr   = None
-        self.D    = None
+        self.r = None
+        self.dr = None
+        self.D = None
 
         self.J = None
 
@@ -52,7 +51,7 @@ class BladeElementMethod():
     def load_similarity(self, J):
         """
         Load advance ratio similarity coefficient.
-        
+
         Parameters
         ----------
         J: float
@@ -63,18 +62,18 @@ class BladeElementMethod():
 
         self.flight = FlightConditions(airspeed, omega, altitude)
 
-    def load_propeller(self, dist_r, dist_beta, dist_chord, n_blades = 2):
+    def load_propeller(self, dist_r, dist_beta, dist_chord, n_blades=2):
         """
         Create nondimensional propeller.
 
         Parameters
         ----------
         dist_r: np.array
-        
+
         dist_beta: np.array
-        
+
         dist_chord: np.array
-        
+
         n_blades: int
 
         Returns
@@ -82,7 +81,7 @@ class BladeElementMethod():
         Propeller object
         """
         # Get geometry
-        r_hub = dist_r[0 ]
+        r_hub = dist_r[0]
         r_tip = dist_r[-1]
 
         _D = 2.0 * r_tip
@@ -94,13 +93,13 @@ class BladeElementMethod():
 
         # Create propeller
         self.propeller = Propeller(r_hub, r_tip, _dist_r, dist_beta, dist_chord)
-        
+
         # Load number of blades
         self.B = n_blades
 
         return self.propeller
 
-    def set_tip_loss(self, flag = True):
+    def set_tip_loss(self, flag=True):
         """
         Activate Prandtl tip loss model.
 
@@ -112,46 +111,46 @@ class BladeElementMethod():
 
     def induction_axial(self, r, phi, beta):
 
-        _F        = self.compute_tip_loss(r, phi)
+        _F = self.compute_tip_loss(r, phi)
         _solidity = self.solidity(r)
 
         # Convert to radians
         _phi, _beta = np.deg2rad([phi, beta])
-        
+
         # Compute angle of attack
         alpha = beta - phi
-        
+
         # Polar
         _cl = self.airfoil.cl(alpha)
         _cd = self.airfoil.cd(_cl)
-        
-        NUM = 4.0 * _F * (np.sin(_phi))**2.0
+
+        NUM = 4.0 * _F * (np.sin(_phi)) ** 2.0
         DEN = _solidity * (_cl * np.cos(_phi) - _cd * np.sin(_phi))
-        
+
         frac = NUM / DEN - 1
-        
+
         return 1.0 / frac
 
     def induction_tangential(self, r, phi, beta):
-        
+
         # Convert to radians
         _beta, _phi = np.deg2rad([beta, phi])
-        
+
         # Compute angle of attack
         alpha = beta - phi
 
-        F        = self.compute_tip_loss(r, phi)
+        F = self.compute_tip_loss(r, phi)
         solidity = self.solidity(r)
 
         # Polar
         _cl = self.airfoil.cl(alpha)
         _cd = self.airfoil.cd(_cl)
-        
+
         NUM = 4.0 * F * np.sin(_phi) * np.cos(_phi)
         DEN = solidity * (_cl * np.sin(_phi) - _cd * np.cos(_phi))
-        
+
         frac = NUM / DEN + 1
-        
+
         return 1.0 / frac
 
     def solidity(self, r):
@@ -174,9 +173,9 @@ class BladeElementMethod():
         NUM = _B * _chord
         DEN = 2.0 * pi * (r * _D)
 
-        return NUM / DEN 
+        return NUM / DEN
 
-    def compute_inflow_angle(self, r, x0 = 50):
+    def compute_inflow_angle(self, r, x0=50):
         """
         Solve nonlinear inflow angle equation.
 
@@ -194,7 +193,7 @@ class BladeElementMethod():
             If NO convergence, returns np.nan
         """
         self.beta = self.propeller.beta(r)
-        self.r    = r
+        self.r = r
 
         try:
             sol = newton_krylov(self._residual, x0)
@@ -204,7 +203,7 @@ class BladeElementMethod():
 
         return sol.item()
 
-    def compute_loads(self, dr = 0.01):
+    def compute_loads(self, dr=0.01):
         """
         Compute blade loads.
 
@@ -220,55 +219,53 @@ class BladeElementMethod():
         """
         _J = self.J
         _D = self.D
-        
+
         _r_hub = self.propeller.r_hub / _D
         _r_tip = self.propeller.r_tip / _D
 
         # Number of steps
-        N  = np.floor((_r_tip - _r_hub) / dr)
-    
+        N = np.floor((_r_tip - _r_hub) / dr)
+
         # Create nondimensional radius distribution
-        r_space = np.linspace(start = _r_hub, 
-                              stop  = _r_tip, 
-                              num   = N           )
+        r_space = np.linspace(start=_r_hub, stop=_r_tip, num=N)
 
         # Initial condition
         C_T = [0.0]
         C_Q = [0.0]
 
         # Initial condition is 20% larger than the twist angle
-        phi0 = np.arctan(_J/_r_hub)
+        phi0 = np.arctan(_J / _r_hub)
         phi0 = np.rad2deg(phi0)
-        
-        phi_space = [phi0]
-        F_space   = [1.0]
 
-        idx = 0 # Index to control numpy arrays
+        phi_space = [phi0]
+        F_space = [1.0]
+
+        idx = 0  # Index to control numpy arrays
         for r in r_space[:-1]:
 
             # Compute induction angle
             phi = self.compute_inflow_angle(r, phi_space[idx])
-            
+
             # Compute induction coefficients
-            axi = self.induction_axial     (r, phi, self.beta)
+            axi = self.induction_axial(r, phi, self.beta)
             tng = self.induction_tangential(r, phi, self.beta)
-            
+
             # Tip loss
             _F = self.compute_tip_loss(r, phi)
-            
+
             # Compute Euler **implicit** derivative
-            F_T = 4.0 * pi * _J**2.0 * (r+dr)**1.0 * (1.0 + axi) * axi * _F
-            F_Q = 4.0 * pi * _J**1.0 * (r+dr)**3.0 * (1.0 + axi) * tng * _F
+            F_T = 4.0 * pi * _J ** 2.0 * (r + dr) ** 1.0 * (1.0 + axi) * axi * _F
+            F_Q = 4.0 * pi * _J ** 1.0 * (r + dr) ** 3.0 * (1.0 + axi) * tng * _F
 
             # Integrate
             C_T.append(C_T[idx] + dr * F_T)
             C_Q.append(C_Q[idx] + dr * F_Q)
-            
+
             # Save state
-            F_space.append  (_F )
+            F_space.append(_F)
             phi_space.append(phi)
-            
-            idx +=1
+
+            idx += 1
 
         C_T = np.array(C_T)
         C_Q = np.array(C_Q)
@@ -277,16 +274,16 @@ class BladeElementMethod():
         self.C_Q = C_Q
 
         self.dr = dr
-        self.N  = N
-        
+        self.N = N
+
         # Pack up results
         result = dict()
 
-        result['r']   = r_space
-        result['C_T'] = C_T
-        result['C_Q'] = C_Q
-        result['F']   = F_space
-        result['phi'] = phi_space
+        result["r"] = r_space
+        result["C_T"] = C_T
+        result["C_Q"] = C_Q
+        result["F"] = F_space
+        result["phi"] = phi_space
 
         return result
 
@@ -305,12 +302,12 @@ class BladeElementMethod():
             Equation residual
         """
         _phi = np.deg2rad(phi)
-        
+
         _J = self.J
         _r = self.r
 
-        # Compute incidence coefficients 
-        ind_ax  = self.induction_axial     (_r, phi, self.beta) 
+        # Compute incidence coefficients
+        ind_ax = self.induction_axial(_r, phi, self.beta)
         ind_tan = self.induction_tangential(_r, phi, self.beta)
 
         # Compute residual
@@ -333,12 +330,12 @@ class BladeElementMethod():
         """
         # Check correct use
         if self.include_tip_loss is None:
-            raise ValueError('You need to invoke the set_tip_loss method first!')
+            raise ValueError("You need to invoke the set_tip_loss method first!")
 
         if self.include_tip_loss == False:
-          
+
             return 1.0
-        
+
         else:
 
             _phi = np.deg2rad(phi)
@@ -347,7 +344,7 @@ class BladeElementMethod():
             _B = self.B
             _D = self.D
             _R = self.propeller.r_tip
-            
+
             _r = r * _D
 
             NUM = _B * (_R - _r)
@@ -376,7 +373,7 @@ class BladeElementMethod():
 
         _B = self.B
         _R = self.propeller.r_hub
-        
+
         N = _B * (r - _R)
         D = 2 * r * np.sin(_phi)
 

@@ -2,10 +2,11 @@ language: python
 python:
   - "3.6"
   - "3.7"
+  - "3.8"
 
 install:
   - pip install .
+  - pip install -r requirements-dev.txt
 
 script:
-  - python tests/test_tip_loss.py
-  - python tests/test_no_tip_loss.py
+  - pytest -v -x -ra
