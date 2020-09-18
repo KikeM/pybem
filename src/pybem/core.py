@@ -14,10 +14,8 @@ class FlightConditions():
         ----------
         V: float
             airspeed in km/h
-
         omega: float
             Blade angular speed
-
         altitude: float
             Height from the ground, in meters. 
         """
@@ -146,4 +144,3 @@ class Propeller():
         self._chord = _chord
 
         return _chord
-
