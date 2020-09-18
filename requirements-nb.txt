@@ -1,2 +1,2 @@
 jupyter
-jupytext
+jupytext==1.6.0
