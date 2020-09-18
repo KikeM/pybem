@@ -3,7 +3,6 @@ from math import pi
 import numpy as np
 import pandas as pd
 from fluids.atmosphere import ATMOSPHERE_1976
-from scipy.interpolate import interp1d
 
 
 class FlightConditions:
@@ -27,60 +26,6 @@ class FlightConditions:
     @property
     def rho(self):
         return self.atmosphere.rho
-
-
-class Airfoil:
-    """
-    Airfoil aerodynamic properties.
-    """
-
-    def __init__(self, alpha, polar_cl, polar_cd):
-
-        # Store the data
-        self.polar_cl = polar_cl
-        self.polar_cd = polar_cd
-
-        # Create interpolants
-        self.interpolant_cl = interp1d(alpha, polar_cl)
-        self.interpolant_cd = interp1d(polar_cl, polar_cd)
-
-    def cl(self, alpha):
-        """
-        Lift coefficient.
-
-        Parameters
-        ----------
-        alpha: float
-
-        Returns
-        -------
-        cl: float
-            Interpolation based on lift polar.
-        """
-        self.alpha = alpha
-        _cl = self.interpolant_cl(alpha).item()
-        self._cl = _cl
-
-        return _cl
-
-    def cd(self, cl):
-        """
-        Drag coefficient.
-
-        Parameters
-        ----------
-        cl: float
-
-        Returns
-        -------
-        cd: float
-            Interpolation based on drag polar.
-        """
-        self._cl = cl
-        _cd = self.interpolant_cd(cl).item()
-        self._cd = _cd
-
-        return _cd
 
 
 class Propeller:
