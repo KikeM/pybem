@@ -1,5 +1,7 @@
 from math import pi
 
+from scipy.interpolate import interp1d
+
 
 class AnalyticalAirfoil:
     """Analytical implementation
@@ -33,7 +35,12 @@ class AnalyticalAirfoil:
         cl : float
         """
 
-        return 2.0 * pi * alpha
+        cl = 2.0 * pi * alpha
+
+        self.alpha = alpha
+        self.cl = cl
+
+        return cl
 
     def compute_cd(self, alpha):
         """Compute drag coefficient.
@@ -48,9 +55,15 @@ class AnalyticalAirfoil:
         cd : float
         """
 
-        cl = self.cl(alpha=alpha)
+        cl = self.compute_cl(alpha=alpha)
 
-        return cl ** 2.0
+        cd = cl ** 2.0
+
+        self.alpha = alpha
+        self.cl = cl
+        self.cd = cd
+
+        return cd
 
 
 class Airfoil(AnalyticalAirfoil):
@@ -100,7 +113,7 @@ class Airfoil(AnalyticalAirfoil):
 
         return cl
 
-    def compute_cd(self, cl, alpha=None):
+    def compute_cd(self, cl = None, alpha=None):
         """Compute drag coefficient.
 
         Parameters
