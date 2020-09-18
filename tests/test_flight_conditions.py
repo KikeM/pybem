@@ -24,6 +24,7 @@ def test_omega():
 
     assert_allclose(expected, result)
 
+
 def test_density():
 
     conditions = FlightConditions(airspeed=1000, omega=1, altitude=1000)
@@ -32,4 +33,3 @@ def test_density():
     result = conditions.rho
 
     assert_allclose(expected, result)
-
