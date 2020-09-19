@@ -10,4 +10,4 @@ from pybem.models.flight_conditions import FlightConditions
 
 
 # Blade Element Method
-from pybem.bem import BladeElementMethod
+from pybem.bem.model import BladeElementMethod
