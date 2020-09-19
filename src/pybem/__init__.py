@@ -6,7 +6,7 @@ del get_versions
 # Core
 from pybem.models.propeller import Propeller
 from pybem.models.airfoils import Airfoil
-from pybem.core import FlightConditions
+from pybem.models.flight_conditions import FlightConditions
 
 
 # Blade Element Method

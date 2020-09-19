@@ -113,7 +113,7 @@ class Airfoil(AnalyticalAirfoil):
 
         return cl
 
-    def compute_cd(self, cl = None, alpha=None):
+    def compute_cd(self, cl=None, alpha=None):
         """Compute drag coefficient.
 
         Parameters
