@@ -1,35 +1,19 @@
-from math import pi
-
-import numpy as np
-import pandas as pd
-from fluids.atmosphere import ATMOSPHERE_1976
-
-
-class FlightConditions:
-    def __init__(self, airspeed, omega, altitude):
-        """
-        Parameters
-        ----------
-        V: float
-            airspeed in km/h
-        omega: float
-            Blade angular speed
-        altitude: float
-            Height from the ground, in meters.
-        """
-
-        self.atmosphere = ATMOSPHERE_1976(Z=altitude)
-
-        self.v = airspeed * (1000.0 / 3600.0)
-        self.omega = omega * (2 * pi) / 60.0
-
-    @property
-    def rho(self):
-        return self.atmosphere.rho
+from scipy.interpolate import interp1d
 
 
 class Propeller:
-    def __init__(self, r_hub: float, r_tip: float, r_dist, beta_dist, chord_dist):
+    """Propeller definition.
+
+    Parameters
+    ----------
+    r_hub : float
+    r_tip : float
+    r_dist : array-like of floats
+    beta_dist : array-like of floats
+    chord_dist : array-like of floats
+    """
+
+    def __init__(self, r_hub, r_tip, r_dist, beta_dist, chord_dist):
 
         # Get blade bounds
         self.r_hub = r_hub
@@ -47,9 +31,8 @@ class Propeller:
         self._beta = None
         self._chord = None
 
-    def beta(self, r):
-        """
-        Airfoil twist at location r.
+    def get_beta(self, r):
+        """Airfoil twist at location r.
 
         Parameters
         ----------
@@ -68,9 +51,8 @@ class Propeller:
 
         return _beta
 
-    def chord(self, r):
-        """
-        Airfoil chord at location r.
+    def get_chord(self, r):
+        """Airfoil chord at location r.
 
         Parameters
         ----------

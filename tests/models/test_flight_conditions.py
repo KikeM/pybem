@@ -1,6 +1,6 @@
 import pytest
 
-from pybem.core import FlightConditions
+from pybem.models.flight_conditions import FlightConditions
 
 from numpy.testing import assert_allclose
 

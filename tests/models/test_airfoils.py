@@ -58,7 +58,7 @@ def test_airfoil_unseen_interpolation():
 
     analytical = AnalyticalAirfoil()
 
-    alphas = np.linspace(0,1, num = 1000)
+    alphas = np.linspace(0, 1, num=1000)
     polar_cl = []
     polar_cd = []
 
