@@ -38,6 +38,10 @@ def test_analytical_airfoil_cl(alpha, expected_cl):
 
     result_cl = airfoil.compute_cl(alpha)
 
+    deg2rad = pi / 180.0
+
+    expected_cl = 2.0 * pi * (alpha * deg2rad)
+
     assert_allclose(expected_cl, result_cl)
 
 
@@ -72,7 +76,9 @@ def test_airfoil_unseen_interpolation(polars):
     result_cl = empirical.compute_cl(alpha0)
     result_cd = empirical.compute_cd(alpha=alpha0)
 
-    expected_cl = 2.0 * pi * alpha0
+    deg2rad = pi / 180.0
+
+    expected_cl = 2.0 * pi * (alpha0 * deg2rad)
     expected_cd = expected_cl ** 2.0
 
     assert_allclose(expected_cl, result_cl)

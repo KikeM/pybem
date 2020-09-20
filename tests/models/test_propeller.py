@@ -58,16 +58,23 @@ def test_section_solidity(section):
 
 def test_section_cl(section):
 
-    result = section.cl(alpha=1.0)
-    expected = 2.0 * pi
+    alpha = 1.0
+    deg2rad = pi / 180.0
+
+    result = section.cl(alpha=alpha)
+
+    expected = 2.0 * pi * alpha * deg2rad
 
     assert_allclose(expected, result)
 
 
 def test_section_cd(section):
 
+    alpha = 1.0
+    deg2rad = pi / 180.0
+
     result = section.cd(alpha=1.0)
-    expected = (2.0 * pi) ** 2.0
+    expected = (2.0 * pi * alpha * deg2rad) ** 2.0
 
     assert_allclose(expected, result)
 
@@ -125,15 +132,27 @@ def test_propeller_solidity(propeller):
 
 def test_propeller_compute_cl(propeller):
 
-    result_cl = propeller.compute_cl(r=0.75, alpha=1.0)
-    expected_cl = 2.0 * pi * 1.0 * (3.0 + 2.0) / 2.0
+    alpha = 1.0
+    deg2rad = pi / 180.0
+
+    result_cl = propeller.compute_cl(r=0.75, alpha=alpha)
+    expected_cl = 2.0 * pi * (alpha * deg2rad) * (3.0 + 2.0) / 2.0
 
     assert_allclose(expected_cl, result_cl)
 
 
 def test_propeller_compute_cd(propeller):
 
-    result_cd = propeller.compute_cd(r=0.75, alpha=1.0)
-    expected_cd = 690.8723080762552
+    alpha = 1.0
+    deg2rad = pi / 180.0
+
+    result_cd = propeller.compute_cd(r=0.75, alpha=alpha)
+
+    expected_cd = (
+        2.0
+        * pi ** 2.0
+        * (alpha * deg2rad) ** 2.0
+        * (3.0 * 3.0 ** 2.0 + 2.0 * 2.0 ** 2.0)
+    )
 
     assert_allclose(expected_cd, result_cd)

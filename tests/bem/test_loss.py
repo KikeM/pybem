@@ -10,7 +10,6 @@ from pybem.bem.loss import compute_hub_loss, compute_tip_loss, func
 def test_auxiliary_function():
 
     phi = 30.0  # deg
-    phi = np.deg2rad(phi)
     x = 1.0
     a = 1.0 / 2.0
 
@@ -27,7 +26,6 @@ def test_auxiliary_function():
 def test_tip_loss_factor(B):
 
     phi = 30.0  # deg
-    phi = np.deg2rad(phi)
     x = 1.0 / 2.0
 
     result = compute_tip_loss(phi=phi, r=x, B=B)
@@ -43,7 +41,6 @@ def test_tip_loss_factor(B):
 def test_hub_loss_factor(B):
 
     phi = 30.0  # deg
-    phi = np.deg2rad(phi)
     x = 1.0 / 2.0
     r_hubR = 1.0 / 5.0
 
