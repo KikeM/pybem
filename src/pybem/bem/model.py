@@ -26,17 +26,21 @@ class BladeElementMethod:
     ----------
     J : float
         Advance ratio.
-    propeller
-    flight
+    propeller : Propeller-like object
+    flight : FlightConditions-like object
     tip_loss : bool
+        Use the tip correction factor? Default is `False`.
     hub_loss : bool
+        Use the tip correction factor? Default is `False`.
     r_dist : list of floats
     phi : list of floats
-    C_T : np.array
-    C_Q : np.array
+    C_T : list of floats
+    C_Q : list of floats
+    N_SECTIONS : int
+    EPSILON :
     """
 
-    N_SECTIONS = 10
+    N_SECTIONS = 100
     EPSILON = 1e-6
 
     def __init__(self, J, propeller, flight=None, tip_loss=False, hub_loss=False):
@@ -51,17 +55,26 @@ class BladeElementMethod:
 
         # Dimensionless thrust and torque distribution
         self.phi = []
+        self.r_dist = None
         self.C_T = None
         self.C_Q = None
 
     def solve(self):
-        """Solve the BEM"""
+        """Solve the Blade Element Problem
+
+        Returns
+        -------
+        r_dist : array-like of floats
+            Dimensionless radii.
+        phi : array-like of floats
+            Incidence angles for each r.
+        """
 
         r_min = self.propeller.radii[0]
 
         # Create dimensionless radius distribution
-        start = r_min * (1.0 + self.EPSILON)
-        stop = 1.0 - self.EPSILON
+        start = r_min if self.hub_loss == False else r_min * (1.0 + self.EPSILON)
+        stop = 1.0 if self.tip_loss == False else 1.0 - self.EPSILON
         r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
 
         phi0 = self.propeller.compute_beta(r_min)
