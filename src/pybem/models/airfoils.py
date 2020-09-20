@@ -1,15 +1,23 @@
 from math import pi
 
+import numpy as np
 from scipy.interpolate import interp1d
 
 
 class BaseAirfoil:
     """Analytical airfoil implementation.
 
+    Parameters
+    ----------
+    cl_coeff : float
+        Constant to multiply the analytical lift coefficient.
+    cd_coeff : float
+        Constant to multiply the analytical drag coefficient.
+
     Attributes
     ----------
     alpha : float
-        Angle of attack in radians.
+        Angle of attack in degrees.
     cl : float
         Lift coefficient.
     cd : float
@@ -31,12 +39,14 @@ class BaseAirfoil:
         Parameters
         ----------
         alpha : float
-            Angle of attack in radians.
+            Angle of attack in degrees.
 
         Returns
         -------
         cl : float
         """
+
+        alpha = np.deg2rad(alpha)
 
         cl = 2.0 * pi * alpha * self.cl_coeff
 
@@ -51,7 +61,7 @@ class BaseAirfoil:
         Parameters
         ----------
         alpha : float
-            Angle of attack in radians.
+            Angle of attack in degrees.
 
         Returns
         -------
@@ -75,11 +85,18 @@ class Airfoil(BaseAirfoil):
     Parameters
     ----------
     alpha : array-like of floats
-        Angles of attack for `polar_cl` in radians.
+        Angles of attack for `polar_cl` in degrees.
     polar_cl : array-like of floats
-        Lift coefficients.
+        Lift coefficients for each angle present in alpha.
     polar_cd : array-like of floats
-        Drag coefficients.
+        Drag coefficients for each angle present in alpha.
+
+    Attributes
+    ----------
+    polar_cl : array-like of floats
+    polar_cd : array-like of floats
+    interpolant_cl : scipy.interpolate.interp1-like object
+    interpolant_cd : scipy.interpolate.interp1-like object
     """
 
     def __init__(self, alpha, polar_cl, polar_cd):

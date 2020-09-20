@@ -30,13 +30,15 @@ class BladeElementMethod:
     flight
     tip_loss : bool
     hub_loss : bool
+    r_dist : list of floats
+    phi : list of floats
     C_T : np.array
     C_Q : np.array
     """
 
-    N_SECTIONS = 100
+    N_SECTIONS = 10
 
-    def __init__(self, J, propeller, flight, tip_loss=False, hub_loss=False):
+    def __init__(self, J, propeller, flight=None, tip_loss=False, hub_loss=False):
 
         self.J = J
 
@@ -47,10 +49,12 @@ class BladeElementMethod:
         self.hub_loss = hub_loss
 
         # Dimensionless thrust and torque distribution
+        self.phi = []
         self.C_T = None
         self.C_Q = None
 
     def solve(self):
+        """Solve the BEM"""
 
         r_min = self.propeller.radii[0]
 
@@ -58,12 +62,20 @@ class BladeElementMethod:
         r_dist = np.linspace(start=r_min, stop=1.0, num=self.N_SECTIONS)
 
         phi0 = self.propeller.compute_beta(r_min)
+        phi = []
         for r in r_dist:
 
             # Solve inflow angle.
-            phi = self.compute_inflow_angle(r=r, phi0=phi0)
+            _phi = self.compute_inflow_angle(r=r, phi0=phi0)
 
-            phi0 = phi
+            phi.append(_phi)
+
+            phi0 = _phi
+
+        self.phi = phi
+        self.r_dist = r_dist
+
+        return r_dist, phi
 
     def _residual(self, phi, r):
         """Nonlinear inflow angle equation residual.
@@ -89,28 +101,41 @@ class BladeElementMethod:
         alpha = beta - phi
 
         # Compute lift and drag coefficients
-        cl = 1.0
-        cd = 0.0
+        cl = propeller.compute_cl(r=r, alpha=alpha)
+        cd = propeller.compute_cd(r=r, alpha=alpha)
 
         # Compute incidence coefficients
         sigma = propeller.compute_solidity(r)
 
-        a = self.compute_axial_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma, F=F)
-        b = self.compute_angular_coefficient(
-            r=r, phi=phi, cl=cl, cd=cd, sigma=sigma, F=F
-        )
+        a = self.compute_axial_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
+        b = self.compute_angular_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
 
         # Compute residual
         J = self.J
 
+        phi = np.deg2rad(phi)
+
         SUM_1 = np.sin(phi) / (1.0 + a)
-        SUM_2 = np.cos(phi) / (J * r * (1.0 - b))
+        SUM_2 = J * np.cos(phi) / (r * (1.0 - b))
 
         res = SUM_1 - SUM_2
 
         return res
 
-    def compute_loss(self, r, phi):
+    def compute_prandtl_loss(self, r, phi):
+        """Compute tip and hub losses according to the Prandtl model.
+
+        Parameters
+        ----------
+        r : float
+        phi : float
+            Incidence angle in degrees
+
+        Returns
+        -------
+        F : float
+            Correction factor
+        """
 
         propeller = self.propeller
 
@@ -140,12 +165,14 @@ class BladeElementMethod:
         cl : float
         cd : float
         phi : float
-            Incidence angle in radians.
+            Incidence angle in degrees.
 
         Returns
         -------
         ct : float
         """
+
+        phi = np.deg2rad(phi)
 
         ct = cl * np.cos(phi) - cd * np.sin(phi)
 
@@ -160,23 +187,28 @@ class BladeElementMethod:
         cl : float
         cd : float
         phi : float
-            Incidence angle in radians.
+            Incidence angle in degrees.
 
         Returns
         -------
         cn : float
         """
 
+        phi = np.deg2rad(phi)
+
         cn = cl * np.sin(phi) + cd * np.cos(phi)
 
         return cn
 
-    def compute_axial_coefficient(self, r, phi, cl, cd, sigma, F):
+    def compute_axial_coefficient(self, r, phi, cl, cd, sigma):
 
         ct = self.compute_ct(cl=cl, cd=cd, phi=phi)
 
         # Compute loss coefficients (if necessary)
-        F = self.compute_loss(r=r, phi=phi)
+        F = self.compute_prandtl_loss(r=r, phi=phi)
+
+        # Convert to radians
+        phi = np.deg2rad(phi)
 
         NUM = 4.0 * F * r * (np.sin(phi)) ** 2.0
         DEN = sigma * ct
@@ -187,12 +219,15 @@ class BladeElementMethod:
 
         return a
 
-    def compute_angular_coefficient(self, r, phi, cl, cd, sigma, F):
+    def compute_angular_coefficient(self, r, phi, cl, cd, sigma):
 
         cn = self.compute_cn(cl=cl, cd=cd, phi=phi)
 
         # Compute loss coefficients (if necessary)
-        F = self.compute_loss(r=r, phi=phi)
+        F = self.compute_prandtl_loss(r=r, phi=phi)
+
+        # Convert to radians
+        phi = np.deg2rad(phi)
 
         NUM = 4.0 * F * r * np.sin(phi) * np.cos(phi)
         DEN = sigma * cn
@@ -223,11 +258,11 @@ class BladeElementMethod:
         # Fix section
         func = partial(self._residual, r=r)
 
-        try:
-            phi = newton_krylov(func, phi0)
-        except Exception as ex:
-            print(ex)
-            phi = np.array(np.nan)
+        # try:
+        phi = newton_krylov(func, phi0)
+        # except Exception as ex:
+        #     print(ex)
+        #     phi = np.array(np.nan)
 
         return phi.item()
 
