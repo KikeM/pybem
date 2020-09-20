@@ -16,11 +16,14 @@ class BaseAirfoil:
         Drag coefficient.
     """
 
-    def __init__(self):
+    def __init__(self, cl_coeff=1.0, cd_coeff=1.0):
 
         self.alpha = None
         self.cl = None
         self.cd = None
+
+        self.cl_coeff = cl_coeff
+        self.cd_coeff = cd_coeff
 
     def compute_cl(self, alpha):
         """Compute lift coefficient.
@@ -35,7 +38,7 @@ class BaseAirfoil:
         cl : float
         """
 
-        cl = 2.0 * pi * alpha
+        cl = 2.0 * pi * alpha * self.cl_coeff
 
         self.alpha = alpha
         self.cl = cl
@@ -57,7 +60,7 @@ class BaseAirfoil:
 
         cl = self.compute_cl(alpha=alpha)
 
-        cd = cl ** 2.0
+        cd = self.cd_coeff * (cl ** 2.0)
 
         self.alpha = alpha
         self.cl = cl

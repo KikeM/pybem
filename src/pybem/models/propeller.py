@@ -180,7 +180,7 @@ class Propeller:
         ]
         f = interp1d(radii, solidities)
 
-        sigma = f(r)
+        sigma = f(r).item()
 
         return sigma
 
@@ -207,7 +207,7 @@ class Propeller:
 
         f = interp1d(radii, coeffs)
 
-        cl = f(r)
+        cl = f(r).item()
 
         return cl
 
@@ -234,6 +234,6 @@ class Propeller:
 
         f = interp1d(radii, coeffs)
 
-        cd = f(r)
+        cd = f(r).item()
 
         return cd
