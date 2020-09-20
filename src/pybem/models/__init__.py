@@ -1,2 +1,2 @@
-from .airfoils import Airfoil
-from .propeller import Propeller
+from .airfoils import BaseAirfoil, Airfoil
+from .propeller import Propeller, Section
