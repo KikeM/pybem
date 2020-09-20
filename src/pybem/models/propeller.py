@@ -104,6 +104,8 @@ class Propeller:
     R : float
     R_hub : float
     sections : sorted list of Sections-like objects
+    radii : list-like of floats
+        Distribution of dimensionless radius distribution
     """
 
     def __init__(self, B, sections):
@@ -135,6 +137,8 @@ class Propeller:
 
         self._interpolant_chord = interp1d(dist_r, dist_chord)
         self._interpolant_beta = interp1d(dist_r, dist_beta)
+
+        self.radii = dist_r
 
     def _find_bracket(self, r):
         """For a given dimensionless location `r`, find the
