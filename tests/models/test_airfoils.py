@@ -4,7 +4,27 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 import numpy as np
 
-from pybem.models.airfoils import Airfoil, AnalyticalAirfoil
+from pybem.models.airfoils import Airfoil, BaseAirfoil
+
+
+@pytest.fixture
+def polars():
+
+    analytical = BaseAirfoil()
+
+    alphas = np.linspace(0, 1, num=1000)
+    polar_cl = []
+    polar_cd = []
+
+    for alpha in alphas:
+
+        _cl = analytical.compute_cl(alpha)
+        _cd = analytical.compute_cd(alpha)
+
+        polar_cl.append(_cl)
+        polar_cd.append(_cd)
+
+    return alphas, polar_cl, polar_cd
 
 
 @pytest.mark.parametrize(
@@ -14,28 +34,16 @@ from pybem.models.airfoils import Airfoil, AnalyticalAirfoil
 )
 def test_analytical_airfoil_cl(alpha, expected_cl):
 
-    airfoil = AnalyticalAirfoil()
+    airfoil = BaseAirfoil()
 
     result_cl = airfoil.compute_cl(alpha)
 
     assert_allclose(expected_cl, result_cl)
 
 
-def test_airfoil_analytical_interpolation():
+def test_airfoil_analytical_interpolation(polars):
 
-    analytical = AnalyticalAirfoil()
-
-    alphas = [-1.0, 0.0, 1.0]
-    expected_cl = []
-    expected_cd = []
-
-    for alpha in alphas:
-
-        _cl = analytical.compute_cl(alpha)
-        _cd = analytical.compute_cd(alpha)
-
-        expected_cl.append(_cl)
-        expected_cd.append(_cd)
+    alphas, expected_cl, expected_cd = polars
 
     empirical = Airfoil(alpha=alphas, polar_cl=expected_cl, polar_cd=expected_cd)
 
@@ -54,21 +62,9 @@ def test_airfoil_analytical_interpolation():
     assert_array_almost_equal(expected_cd, result_cd)
 
 
-def test_airfoil_unseen_interpolation():
+def test_airfoil_unseen_interpolation(polars):
 
-    analytical = AnalyticalAirfoil()
-
-    alphas = np.linspace(0, 1, num=1000)
-    polar_cl = []
-    polar_cd = []
-
-    for alpha in alphas:
-
-        _cl = analytical.compute_cl(alpha)
-        _cd = analytical.compute_cd(alpha)
-
-        polar_cl.append(_cl)
-        polar_cd.append(_cd)
+    alphas, polar_cl, polar_cd = polars
 
     empirical = Airfoil(alpha=alphas, polar_cl=polar_cl, polar_cd=polar_cd)
 

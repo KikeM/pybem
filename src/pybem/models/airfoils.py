@@ -3,8 +3,8 @@ from math import pi
 from scipy.interpolate import interp1d
 
 
-class AnalyticalAirfoil:
-    """Analytical implementation
+class BaseAirfoil:
+    """Analytical airfoil implementation.
 
     Attributes
     ----------
@@ -66,7 +66,7 @@ class AnalyticalAirfoil:
         return cd
 
 
-class Airfoil(AnalyticalAirfoil):
+class Airfoil(BaseAirfoil):
     """Airfoil section aerodynamic coefficients.
 
     Parameters
