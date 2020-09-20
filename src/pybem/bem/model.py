@@ -213,7 +213,11 @@ class BladeElementMethod:
         NUM = 4.0 * F * r * (np.sin(phi)) ** 2.0
         DEN = sigma * ct
 
-        frac = NUM / DEN - 1.0
+        # Prevent division by zero warning
+        if np.isclose(DEN, 0.0):
+            frac = np.inf
+        else:
+            frac = NUM / DEN - 1.0
 
         a = 1.0 / frac
 
@@ -232,7 +236,11 @@ class BladeElementMethod:
         NUM = 4.0 * F * r * np.sin(phi) * np.cos(phi)
         DEN = sigma * cn
 
-        frac = NUM / DEN + 1.0
+        # Prevent division by zero warning
+        if np.isclose(DEN, 0.0):
+            frac = np.inf
+        else:
+            frac = NUM / DEN + 1.0
 
         b = 1.0 / frac
 
