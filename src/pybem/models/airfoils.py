@@ -121,7 +121,10 @@ class Airfoil(BaseAirfoil):
 
         Parameters
         ----------
+        alpha : float
+            Angle of attack.
         cl : float
+            Lift coefficient.
 
         Returns
         -------

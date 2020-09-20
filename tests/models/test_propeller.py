@@ -50,6 +50,7 @@ def section():
 def test_section_solidity(section):
 
     result = section.solidity(1, 1.0)
+
     expected = 1.0 / (2.0 * pi)
 
     assert_allclose(expected, result)

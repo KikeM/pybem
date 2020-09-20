@@ -96,7 +96,14 @@ class Propeller:
     Parameters
     ----------
     B : int
+        Number of blades.
     sections : list of Sections-like objects
+
+    Attributes
+    ----------
+    R : float
+    R_hub : float
+    sections : sorted list of Sections-like objects
     """
 
     def __init__(self, B, sections):
@@ -154,10 +161,34 @@ class Propeller:
         return left, right
 
     def compute_chord(self, r):
-        return self._interpolant_chord(r).item()
+        """Compute section chord via interpolation between sections.
+
+        Parameters
+        ----------
+        r : float
+
+        Returns
+        -------
+        chord : float
+        """
+        chord = self._interpolant_chord(r).item()
+
+        return chord
 
     def compute_beta(self, r):
-        return self._interpolant_beta(r).item()
+        """Compute section beta via interpolation between sections.
+
+        Parameters
+        ----------
+        r : float
+
+        Returns
+        -------
+        beta : float
+        """
+        beta = self._interpolant_beta(r).item()
+
+        return beta
 
     def compute_solidity(self, r):
         """Compute section solidity via interpolation between sections.
