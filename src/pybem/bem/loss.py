@@ -12,7 +12,7 @@ def func(phi, x, a):
     Parameters
     ----------
     phi : float
-        Incidence angle in radians
+        Incidence angle in radians.
     x : float
         Dimensionless radius r / R
     a : float
@@ -44,8 +44,6 @@ def compute_tip_loss(phi, r, B):
     -------
     F_tip: float
     """
-    # TODO : should it come here in degrees? _phi = np.deg2rad(phi)
-
     f_tip = func(phi=phi, x=r, a=1.0)
     f_tip *= B
 
@@ -72,8 +70,6 @@ def compute_hub_loss(phi, r, B, r_hubR):
     -------
     F_hub: float
     """
-    # TODO : should it come here in degrees? _phi = np.deg2rad(phi)
-
     f_hub = func(phi=phi, x=r, a=r_hubR)
     f_hub *= -B
 
