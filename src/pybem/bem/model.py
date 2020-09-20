@@ -37,6 +37,7 @@ class BladeElementMethod:
     """
 
     N_SECTIONS = 10
+    EPSILON = 1e-6
 
     def __init__(self, J, propeller, flight=None, tip_loss=False, hub_loss=False):
 
@@ -59,7 +60,9 @@ class BladeElementMethod:
         r_min = self.propeller.radii[0]
 
         # Create dimensionless radius distribution
-        r_dist = np.linspace(start=r_min, stop=1.0, num=self.N_SECTIONS)
+        start = r_min * (1.0 + self.EPSILON)
+        stop = 1.0 - self.EPSILON
+        r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
 
         phi0 = self.propeller.compute_beta(r_min)
         phi = []
