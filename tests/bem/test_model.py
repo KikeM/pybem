@@ -40,25 +40,25 @@ def propeller():
     return propeller
 
 
-def test_run_bem_no_losses(propeller):
+class TestRun:
+    def test_no_losses(self, propeller):
 
-    bem = BladeElementMethod(J=1, propeller=propeller)
+        bem = BladeElementMethod(J=1, propeller=propeller)
 
-    bem.solve()
+        bem.solve()
 
-    pass  # What could I assert?
+        pass  # What could I assert?
+
+    def test_with_losses(self, propeller):
+
+        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+
+        bem.solve()
+
+        pass  # What could I assert?
 
 
-def test_run_bem_with_losses(propeller):
-
-    bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
-
-    bem.solve()
-
-    pass  # What could I assert?
-
-
-def test_reproduce_bem_no_losses(propeller):
+class TestReproduceOutputs:
     """This is not a proper test, but it gives you some guarantees.
 
     With the actual state of the code, we are getting a result that seems
@@ -73,66 +73,80 @@ def test_reproduce_bem_no_losses(propeller):
     need to be updated.
     """
 
-    bem = BladeElementMethod(J=1, propeller=propeller)
+    def test_solve_no_losses(self, propeller):
 
-    bem.N_SECTIONS = 10
+        bem = BladeElementMethod(J=1, propeller=propeller)
 
-    bem.solve()
+        bem.N_SECTIONS = 10
 
-    result_phi = bem.phi
+        bem.solve()
 
-    expected_phi = [
-        65.02458658223601,
-        61.531591303050206,
-        58.062871180704974,
-        54.68073133672458,
-        52.70649067486621,
-        50.64850667164986,
-        48.571679570213234,
-        46.5265770548006,
-        44.549803327627394,
-        42.66532393117762,
-    ]
+        result_phi = bem.phi_dist
 
-    assert_allclose(expected_phi, result_phi)
+        expected_phi = [
+            65.02458658223601,
+            61.531591303050206,
+            58.062871180704974,
+            54.68073133672458,
+            52.70649067486621,
+            50.64850667164986,
+            48.571679570213234,
+            46.5265770548006,
+            44.549803327627394,
+            42.66532393117762,
+        ]
 
+        assert_allclose(expected_phi, result_phi)
 
-def test_reproduce_bem_with_losses(propeller):
-    """This is not a proper test, but it gives you some guarantees.
+    def test_solve_with_losses(self, propeller):
 
-    With the actual state of the code, we are getting a result that seems
-    to be correct for the type of phenomena we are solving.
+        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
 
-    Perhaps if we linearise the equations we could validate the solver, but
-    I haven't had time for the moment. So I check at least that for the same inputs,
-    I am getting the same outputs from here on.
+        bem.N_SECTIONS = 10
 
-    If a bug is found in the future, this test would fail, but that is not
-    necessarilly wrong. If the bug is proved to be correct, then the expected values
-    need to be updated.
-    """
+        bem.solve()
 
-    bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+        result_phi = bem.phi_dist
 
-    bem.solve()
+        expected_phi = [
+            60.011868623160844,
+            60.2642555093087,
+            57.29588901630371,
+            54.09221438071569,
+            52.18007160086735,
+            50.04596910839645,
+            47.76712196831369,
+            45.351112313287835,
+            42.5933251947877,
+            30.13349622416542,
+        ]
 
-    bem.N_SECTIONS = 10
+        assert_allclose(expected_phi, result_phi)
 
-    bem.solve()
+    def test_forces_no_losses(self, propeller):
 
-    result_phi = bem.phi
+        bem = BladeElementMethod(
+            J=1, propeller=propeller, tip_loss=False, hub_loss=False
+        )
 
-    expected_phi = [
-        60.011868623160844,
-        60.2642555093087,
-        57.29588901630371,
-        54.09221438071569,
-        52.18007160086735,
-        50.04596910839645,
-        47.76712196831369,
-        45.351112313287835,
-        42.5933251947877,
-        30.13349622416542,
-    ]
+        bem.solve()
 
-    assert_allclose(expected_phi, result_phi)
+        CT, CQ = bem.integrate_forces()
+
+        result_forces = [CT, CQ]
+        expected_forces = [-0.7608500036338367, -0.597588130498909]
+
+        assert_allclose(expected_forces, result_forces)
+
+    def test_forces_with_losses(self, propeller):
+
+        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+
+        bem.solve()
+
+        CT, CQ = bem.integrate_forces()
+
+        result_forces = [CT, CQ]
+        expected_forces = [-0.6787816798433173, -0.513027309014405]
+
+        assert_allclose(expected_forces, result_forces)

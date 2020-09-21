@@ -2,6 +2,7 @@ from functools import partial
 from math import pi
 
 import numpy as np
+from scipy.integrate import simps as integrate
 from scipy.optimize import newton_krylov
 
 from .loss import compute_hub_loss, compute_tip_loss
@@ -37,7 +38,7 @@ class BladeElementMethod:
     C_T : list of floats
     C_Q : list of floats
     N_SECTIONS : int
-    EPSILON :
+    EPSILON : float
     """
 
     N_SECTIONS = 100
@@ -54,123 +55,16 @@ class BladeElementMethod:
         self.hub_loss = hub_loss
 
         # Dimensionless thrust and torque distribution
-        self.phi = []
-        self.r_dist = None
-        self.C_T = None
-        self.C_Q = None
+        self.r_dist = []
+        self.phi_dist = []
+        self.a_dist = []
+        self.b_dist = []
+        self.F_dist = []
+        self.dCTdr_dist = []
+        self.dCQdr_dist = []
 
-    def solve(self):
-        """Solve the Blade Element Problem
-
-        Returns
-        -------
-        r_dist : array-like of floats
-            Dimensionless radii.
-        phi : array-like of floats
-            Incidence angles for each r.
-        """
-
-        r_min = self.propeller.radii[0]
-
-        # Create dimensionless radius distribution
-        start = r_min if self.hub_loss == False else r_min * (1.0 + self.EPSILON)
-        stop = 1.0 if self.tip_loss == False else 1.0 - self.EPSILON
-        r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
-
-        phi0 = self.propeller.compute_beta(r_min)
-        phi = []
-        for r in r_dist:
-
-            # Solve inflow angle.
-            _phi = self.compute_inflow_angle(r=r, phi0=phi0)
-
-            phi.append(_phi)
-
-            phi0 = _phi
-
-        self.phi = phi
-        self.r_dist = r_dist
-
-        return r_dist, phi
-
-    def _residual(self, phi, r):
-        """Nonlinear inflow angle equation residual.
-
-        Parameters
-        ----------
-        phi : float
-            Incidence angle, in degrees.
-        r : float
-            Dimensionless radius, r / R.
-        beta : float
-            Twist angle.
-
-        Returns
-        -------
-        residual : float
-        """
-
-        propeller = self.propeller
-
-        # Compute angle of attack
-        beta = propeller.compute_beta(r)
-        alpha = beta - phi
-
-        # Compute lift and drag coefficients
-        cl = propeller.compute_cl(r=r, alpha=alpha)
-        cd = propeller.compute_cd(r=r, alpha=alpha)
-
-        # Compute incidence coefficients
-        sigma = propeller.compute_solidity(r)
-
-        a = self.compute_axial_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
-        b = self.compute_angular_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
-
-        # Compute residual
-        J = self.J
-
-        phi = np.deg2rad(phi)
-
-        SUM_1 = np.sin(phi) / (1.0 + a)
-        SUM_2 = J * np.cos(phi) / (r * (1.0 - b))
-
-        res = SUM_1 - SUM_2
-
-        return res
-
-    def compute_prandtl_loss(self, r, phi):
-        """Compute tip and hub losses according to the Prandtl model.
-
-        Parameters
-        ----------
-        r : float
-        phi : float
-            Incidence angle in degrees
-
-        Returns
-        -------
-        F : float
-            Correction factor
-        """
-
-        propeller = self.propeller
-
-        F = 1.0  # Assume no loss
-
-        if self.tip_loss == True:
-
-            F_tip = compute_tip_loss(B=propeller.B, r=r, phi=phi)
-
-            F *= F_tip
-
-        if self.hub_loss == True:
-
-            r_hubR = propeller.R_hub / propeller.R
-            F_hub = compute_hub_loss(B=propeller.B, r=r, phi=phi, r_hubR=r_hubR)
-
-            F *= F_hub
-
-        return F
+        self.CT = None
+        self.CQ = None
 
     @staticmethod
     def compute_ct(cl, cd, phi):
@@ -215,6 +109,238 @@ class BladeElementMethod:
         cn = cl * np.sin(phi) + cd * np.cos(phi)
 
         return cn
+
+    @staticmethod
+    def force_coeff_integrand(r, F, a):
+        """Compute the slope dCT/dr to integrate CT.
+
+        Parameters
+        ----------
+        r : float
+        F : float
+        a : float
+
+        Returns
+        -------
+        dCTdr : float
+        """
+
+        dCTdr = 8.0 * pi * r * (1.0 + a) * a * F
+
+        return dCTdr
+
+    @staticmethod
+    def torque_coeff_integrand(r, F, a, b, J):
+        """Compute the slope dCT/dr to integrate CT.
+
+        Parameters
+        ----------
+        r : float
+        F : float
+        a : float
+        b : float
+        J : float
+
+        Returns
+        -------
+        dCQdr : float
+        """
+
+        dCQdr = 8.0 * pi * (r ** 3.0) * (1.0 + a) * b * F / J
+
+        return dCQdr
+
+    def solve(self):
+        """Solve the Blade Element Problem
+
+        Returns
+        -------
+        r_dist : array-like of floats
+            Dimensionless radii.
+        phi : array-like of floats
+            Incidence angles for each r.
+        """
+
+        r_min = self.propeller.radii[0]
+
+        # Create dimensionless radius distribution
+        # Take into account when losses are actived we cannot solve at the exact section
+        start = r_min if self.hub_loss == False else r_min * (1.0 + self.EPSILON)
+        stop = 1.0 if self.tip_loss == False else 1.0 - self.EPSILON
+
+        r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
+        self.r_dist = r_dist
+
+        phi0 = self.propeller.compute_beta(r_min)
+        phi = []
+        a = []
+        b = []
+        dCTdr = []
+        dCQdr = []
+        F = []
+        for r in r_dist:
+
+            # (BEM loop)
+            # Solve inflow angle.
+            _phi = self.compute_inflow_angle(r=r, phi0=phi0)
+
+            # Save station value
+            phi.append(_phi)
+
+            # Update starting point for the next iteration
+            phi0 = _phi
+
+            # (Performance calculation loop)
+            # Compute differential force and torque slopes
+            _F = self.compute_prandtl_loss(r=r, phi=_phi)
+            _a, _b = self.compute_induction_coefficients(r=r, phi=_phi)
+
+            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F)
+            _dCQdr = self.torque_coeff_integrand(r=r, a=_a, F=_F, b=_b, J=self.J)
+
+            # Save station values
+            F.append(_F)
+            dCTdr.append(_dCTdr)
+            dCQdr.append(_dCQdr)
+            a.append(_a)
+            b.append(_b)
+
+        self.phi_dist = phi
+        self.F_dist = F
+        self.dCTdr_dist = dCTdr
+        self.dCQdr_dist = dCQdr
+        self.a_dist = a
+        self.b_dist = b
+
+        return r_dist, phi
+
+    def integrate_forces(self):
+        """Integrate thrust and torque distributions.
+
+        Returns
+        -------
+        CT : float
+        CQ : float
+
+        Notes
+        -----
+        Uses `self` variables:
+            - r_dist
+            - dCTdr_dist
+            - dCQdr_dist
+        """
+
+        _integrate = partial(integrate, x=self.r_dist)
+
+        CT = _integrate(self.dCTdr_dist)
+        CQ = _integrate(self.dCQdr_dist)
+
+        self.CT = CT
+        self.CQ = CQ
+
+        return CT, CQ
+
+    def _residual(self, phi, r):
+        """Nonlinear inflow angle equation residual.
+
+        Parameters
+        ----------
+        phi : float
+            Incidence angle, in degrees.
+        r : float
+            Dimensionless radius, r / R.
+        beta : float
+            Twist angle.
+
+        Returns
+        -------
+        residual : float
+        """
+
+        # Compute angle of attack
+        a, b = self.compute_induction_coefficients(r=r, phi=phi)
+
+        # Compute residual
+        J = self.J
+
+        phi = np.deg2rad(phi)
+
+        SUM_1 = np.sin(phi) / (1.0 + a)
+        SUM_2 = J * np.cos(phi) / (r * (1.0 - b))
+
+        res = SUM_1 - SUM_2
+
+        return res
+
+    def compute_induction_coefficients(self, r, phi):
+        """Compute the velocity induction coefficients.
+
+        Parameters
+        ----------
+        r : float
+            Dimensionless coefficients.
+        phi : float
+            Incidence angle in degrees.
+
+        Returns
+        -------
+        a : float
+            Axial induction coefficient.
+        b : float
+            Tangential induction coefficient.
+        """
+
+        propeller = self.propeller
+
+        # Compute angle of attack
+        beta = propeller.compute_beta(r)
+        alpha = beta - phi
+
+        # Compute lift and drag coefficients
+        cl = propeller.compute_cl(r=r, alpha=alpha)
+        cd = propeller.compute_cd(r=r, alpha=alpha)
+
+        # Compute incidence coefficients
+        sigma = propeller.compute_solidity(r)
+
+        a = self.compute_axial_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
+        b = self.compute_angular_coefficient(r=r, phi=phi, cl=cl, cd=cd, sigma=sigma)
+
+        return a, b
+
+    def compute_prandtl_loss(self, r, phi):
+        """Compute tip and hub losses according to the Prandtl model.
+
+        Parameters
+        ----------
+        r : float
+        phi : float
+            Incidence angle in degrees
+
+        Returns
+        -------
+        F : float
+            Correction factor
+        """
+
+        propeller = self.propeller
+
+        F = 1.0  # Assume no loss
+
+        if self.tip_loss == True:
+
+            F_tip = compute_tip_loss(B=propeller.B, r=r, phi=phi)
+
+            F *= F_tip
+
+        if self.hub_loss == True:
+
+            r_hubR = propeller.R_hub / propeller.R
+            F_hub = compute_hub_loss(B=propeller.B, r=r, phi=phi, r_hubR=r_hubR)
+
+            F *= F_hub
+
+        return F
 
     def compute_axial_coefficient(self, r, phi, cl, cd, sigma):
 
@@ -289,86 +415,3 @@ class BladeElementMethod:
         #     phi = np.array(np.nan)
 
         return phi.item()
-
-    def compute_loads(self, dr=0.01):
-        """Compute blade loads.
-
-        Parameters
-        ----------
-        dr: float
-            Spacing between stations.
-
-        Returns
-        -------
-        tuple: thrust, torque
-
-        """
-        _J = self.J
-        _D = self.D
-
-        _r_hub = self.propeller.r_hub / _D
-        _r_tip = self.propeller.r_tip / _D
-
-        # Number of steps
-        N = np.floor((_r_tip - _r_hub) / dr)
-
-        # Create nondimensional radius distribution
-        r_space = np.linspace(start=_r_hub, stop=_r_tip, num=N)
-
-        # Initial condition
-        C_T = [0.0]
-        C_Q = [0.0]
-
-        # Initial condition is 20% larger than the twist angle
-        phi0 = np.arctan(_J / _r_hub)
-        phi0 = np.rad2deg(phi0)
-
-        phi_space = [phi0]
-        F_space = [1.0]
-
-        idx = 0  # Index to control numpy arrays
-        for r in r_space[:-1]:
-
-            # Compute induction angle
-            phi = self.compute_inflow_angle(r, phi_space[idx])
-
-            # Compute induction coefficients
-            axi = self.compute_axial_coefficient(r, phi, self.beta)
-            tng = self.compute_cn(r, phi, self.beta)
-
-            # Tip loss
-            _F = self.compute_tip_loss(r, phi)
-
-            # Compute Euler **implicit** derivative
-            F_T = 4.0 * pi * _J ** 2.0 * (r + dr) ** 1.0 * (1.0 + axi) * axi * _F
-            F_Q = 4.0 * pi * _J ** 1.0 * (r + dr) ** 3.0 * (1.0 + axi) * tng * _F
-
-            # Integrate
-            C_T.append(C_T[idx] + dr * F_T)
-            C_Q.append(C_Q[idx] + dr * F_Q)
-
-            # Save state
-            F_space.append(_F)
-            phi_space.append(phi)
-
-            idx += 1
-
-        C_T = np.array(C_T)
-        C_Q = np.array(C_Q)
-
-        self.C_T = C_T
-        self.C_Q = C_Q
-
-        self.dr = dr
-        self.N = N
-
-        # Pack up results
-        result = dict()
-
-        result["r"] = r_space
-        result["C_T"] = C_T
-        result["C_Q"] = C_Q
-        result["F"] = F_space
-        result["phi"] = phi_space
-
-        return result
