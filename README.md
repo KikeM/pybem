@@ -1,69 +1,75 @@
 # pybem
 
-
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Build Status](https://travis-ci.org/KikeM/pybem.svg?branch=master)](https://travis-ci.org/KikeM/pybem)
 
 Blade Element Method implementation for propeller calculations.
 
-## Iteration process
+## Installation
 
-![Robust Iteration steps](robust_iteration.png)
+To run it as a user, simply invoke `pip`:
+```bash
+pip install .
+```
+
+### For developpers
+
+If you want to contribute to the library, or tweak it to your own needs, install it in developper mode, including the development libraries:
+```bash
+pip install -e . --requirement requirements-dev.txt --requirement requirements.txt
+```
 
 ## Quickstart
 
+Running the code consists of easy and uncoupled steps:
+1. Declare the airfoil sections with their corresponding geometrical definition.
+1. Create a propeller by putting together the sections and the number of blades.
+1. Create a solver by putting together the propeller and a advance ratio.
+1. Solve the flow.
+1. Compute the force and torque coefficients.
+
+Here is an example with an airfoil defined by an analytical lift and drag polars. 
+
 ```python
-import matplotlib.pyplot as plt
+from pybem.models import Propeller, Section, BaseAirfoil
+from pybem.bem import BladeElementMethod
 
-import numpy as np
-from pybem import BladeElementMethod
+# Define known sections
+sections = [
+    Section(
+        name="Hub",
+        r=0.3,
+        beta=60,
+        chord=0.4,
+        airfoil=BaseAirfoil(cl_coeff=1.0, cd_coeff=1e-2),
+    ),
+    Section(
+        name="Middle",
+        r=0.6,
+        beta=45,
+        chord=0.35,
+        airfoil=BaseAirfoil(cl_coeff=0.85, cd_coeff=1e-3),
+    ),
+    Section(
+        name="Tip",
+        r=1.2,
+        beta=30,
+        chord=0.2,
+        airfoil=BaseAirfoil(cl_coeff=0.5, cd_coeff=1e-3),
+    ),
+]
 
-bem = BladeElementMethod()
-    
-# Quick polar
-# -----------------------------
-def cl(alpha):
+# Define propeller
+B = 6
+propeller = Propeller(B=B, sections=sections)
 
-    from math import pi
-    
-    return 2*pi*(alpha)
+# Define flow conditions and BEM method
+J = 0.2
+bem = BladeElementMethod(J=J, propeller=propeller, tip_loss=False, hub_loss=False)
 
-def cd(cl):
-    
-    return 0.012 + 0.05 * cl**2
+# Solve
+bem.solve()
 
-alpha = np.linspace(-40, 40, 50)
-alpha_r = np.deg2rad(alpha)
+# Compute forces
+CT, CQ = bem.integrate_forces()
 
-cl_alpha = cl(alpha_r)
-cd_polar = cd(cl_alpha)
-
-# -------------------------------
-
-# Lenghts
-D = 0.152 * 2 # meters
-r_tip = D / 2.0
-r_hub = r_tip * 0.15 
-
-# Propeller
-# ---------------------------------
-r    = np.linspace(r_hub, r_tip)
-beta = np.linspace(80, 50)
-chord = 0.2 * r
-# ---------------------------------
-
-# Load airfoil
-bem.load_airfoil(alpha, cl_alpha, cd_polar)
-
-# Load advance ratio
-J = 1
-bem.load_similarity(J = J)
-
-prop = bem.load_propeller(dist_r=r, dist_beta=beta, dist_chord = chord, n_blades = 4)
-bem.set_tip_loss(True)
-
-# Test!
-_r = r[25] / D
-phi0 = np.arctan(J/_r)
-phi0 = np.rad2deg(phi0)
-phi = bem.compute_inflow_angle(_r, phi0)
 ```
