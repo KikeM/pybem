@@ -11,11 +11,11 @@ To run it as a user, simply invoke `pip`:
 pip install .
 ```
 
-### For developpers
+### For developers
 
-If you want to contribute to the library, or tweak it to your own needs, install it in developper mode, including the development libraries:
+If you want to contribute to the library, or tweak it to your own needs, install it in developer mode, including the development libraries:
 ```bash
-pip install -e . --requirement requirements-dev.txt --requirement requirements.txt
+pip install -e . --requirement requirements-dev.txt
 ```
 
 ## Quickstart
@@ -71,5 +71,4 @@ bem.solve()
 
 # Compute forces
 CT, CQ = bem.integrate_forces()
-
 ```
