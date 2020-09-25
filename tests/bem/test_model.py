@@ -73,9 +73,11 @@ class TestReproduceOutputs:
     need to be updated.
     """
 
+    J = 0.2
+
     def test_solve_no_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller)
+        bem = BladeElementMethod(J=self.J, propeller=propeller)
 
         bem.N_SECTIONS = 10
 
@@ -84,23 +86,25 @@ class TestReproduceOutputs:
         result_phi = bem.phi_dist
 
         expected_phi = [
-            65.02458658223601,
-            61.531591303050206,
-            58.062871180704974,
-            54.68073133672458,
-            52.70649067486621,
-            50.64850667164986,
-            48.571679570213234,
-            46.5265770548006,
-            44.549803327627394,
-            42.66532393117762,
+            53.7559900627035,
+            46.51360450433435,
+            40.24566201204451,
+            34.82356412209791,
+            31.020411856568106,
+            27.60175003439307,
+            24.517814495030052,
+            21.727980253100842,
+            19.200977399649037,
+            16.913981930219638,
         ]
 
         assert_allclose(expected_phi, result_phi)
 
     def test_solve_with_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+        bem = BladeElementMethod(
+            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+        )
 
         bem.N_SECTIONS = 10
 
@@ -109,16 +113,16 @@ class TestReproduceOutputs:
         result_phi = bem.phi_dist
 
         expected_phi = [
-            60.011868623160844,
-            60.2642555093087,
-            57.29588901630371,
-            54.09221438071569,
-            52.18007160086735,
-            50.04596910839645,
-            47.76712196831369,
-            45.351112313287835,
-            42.5933251947877,
-            30.13349622416542,
+            59.98375776054978,
+            47.80654198333023,
+            40.79851063596392,
+            35.07657290878467,
+            31.187956608585395,
+            27.78122466482189,
+            24.817388223831337,
+            22.331258522446035,
+            20.59650318210961,
+            29.83229695496505,
         ]
 
         assert_allclose(expected_phi, result_phi)
@@ -126,7 +130,7 @@ class TestReproduceOutputs:
     def test_forces_no_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=1, propeller=propeller, tip_loss=False, hub_loss=False
+            J=self.J, propeller=propeller, tip_loss=False, hub_loss=False
         )
 
         bem.solve()
@@ -134,19 +138,21 @@ class TestReproduceOutputs:
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [-0.7608500036338367, -0.597588130498909]
+        expected_forces = [9.448702260173416, 3.198004953641942]
 
         assert_allclose(expected_forces, result_forces)
 
     def test_forces_with_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+        bem = BladeElementMethod(
+            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+        )
 
         bem.solve()
 
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [-0.6787816798433173, -0.513027309014405]
+        expected_forces = [8.633726487035544, 3.0419449911253316]
 
         assert_allclose(expected_forces, result_forces)

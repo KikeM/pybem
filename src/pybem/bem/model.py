@@ -230,6 +230,7 @@ class BladeElementMethod:
             - dCQdr_dist
         """
 
+        # Creates integrator based on the radius distribution
         _integrate = partial(integrate, x=self.r_dist)
 
         CT = _integrate(self.dCTdr_dist)
