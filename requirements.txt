@@ -1,3 +1,3 @@
-fluids==0.1.84
+fluids==0.1.86
 pandas==1.1.2
 tqdm==4.50.0
