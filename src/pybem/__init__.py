@@ -7,6 +7,6 @@ del get_versions
 from pybem.bem.model import BladeElementMethod
 
 # Core
-from pybem.models.airfoils import Airfoil
+from pybem.models.airfoils import Airfoil, BaseAirfoil
 from pybem.models.flight_conditions import FlightConditions
 from pybem.models.propeller import Propeller, Section
