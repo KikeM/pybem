@@ -82,24 +82,35 @@ class BaseAirfoil:
 class Airfoil(BaseAirfoil):
     """Airfoil section aerodynamic coefficients.
 
-    Parameters
-    ----------
-    alpha : array-like of floats
-        Angles of attack for `polar_cl` in degrees.
-    polar_cl : array-like of floats
-        Lift coefficients for each angle present in alpha.
-    polar_cd : array-like of floats
-        Drag coefficients for each angle present in alpha.
-
     Attributes
     ----------
     polar_cl : array-like of floats
+        [[alpha_0, cl_0], [alpha_1, cl_1], ..., [alpha_N, cl_N]]
     polar_cd : array-like of floats
+        [[alpha_0, cd_0], [alpha_1, cd_1], ..., [alpha_N, cd_N]]
     interpolant_cl : scipy.interpolate.interp1-like object
     interpolant_cd : scipy.interpolate.interp1-like object
     """
 
-    def __init__(self, alpha, polar_cl, polar_cd):
+    def __init__(self, polar_cl, polar_cd):
+        """
+        Parameters
+        ----------
+        polar_cl : array-like of floats
+            Lift coefficients.
+            [[alpha_0, cl_0], [alpha_1, cl_1], ..., [alpha_N, cl_N]]
+        polar_cd : array-like of floats
+            Drag coefficients.
+            - [[alpha_0, cd_0], [alpha_1, cd_1], ..., [alpha_N, cd_N]]
+            or
+            - [[cl_0, cd_0], [cl_1, cd_1], ..., [cl_N, cd_N]]
+
+
+        Notes
+        -----
+        The angles for interpolation for the Cl and the Cd do not have
+        to be necessarily the same.
+        """
 
         super().__init__()
 
@@ -108,8 +119,8 @@ class Airfoil(BaseAirfoil):
         self.polar_cd = polar_cd
 
         # Create interpolants
-        self.interpolant_cl = interp1d(alpha, polar_cl)
-        self.interpolant_cd = interp1d(polar_cl, polar_cd)
+        self.interpolant_cl = interp1d(polar_cl[:, 0], polar_cl[:, 1])
+        self.interpolant_cd = interp1d(polar_cd[:, 0], polar_cd[:, 1])
 
     def compute_cl(self, alpha):
         """Compute lift coefficient.
@@ -149,14 +160,16 @@ class Airfoil(BaseAirfoil):
             Interpolation based on drag polar.
         """
 
+        #  If the drag polar is given in terms of cl
         if alpha is None:
             cd = self.interpolant_cd(cl).item()
+            self.cl = cl
+
         else:
-            cl = self.compute_cl(alpha=alpha)
-            cd = self.interpolant_cd(cl).item()
+            cd = self.interpolant_cd(alpha).item()
+            self.alpha = alpha
 
         # Update state
-        self.cl = cl
         self.cd = cd
 
         return cd

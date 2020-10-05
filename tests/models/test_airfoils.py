@@ -19,12 +19,12 @@ def polars():
     for alpha in alphas:
 
         _cl = analytical.compute_cl(alpha)
-        _cd = analytical.compute_cd(alpha)
+        _cd = analytical.compute_cd(alpha=alpha)
 
         polar_cl.append(_cl)
         polar_cd.append(_cd)
 
-    return alphas, polar_cl, polar_cd
+    return alphas, np.array(polar_cl), np.array(polar_cd)
 
 
 @pytest.mark.parametrize(
@@ -49,14 +49,16 @@ def test_airfoil_analytical_interpolation(polars):
 
     alphas, expected_cl, expected_cd = polars
 
-    empirical = Airfoil(alpha=alphas, polar_cl=expected_cl, polar_cd=expected_cd)
+    polar_cl = np.column_stack((alphas, expected_cl))
+    polar_cd = np.column_stack((alphas, expected_cd))
 
+    empirical = Airfoil(polar_cl=polar_cl, polar_cd=polar_cd)
     result_cl = []
     result_cd = []
 
     for alpha in alphas:
 
-        _cl = empirical.compute_cl(alpha)
+        _cl = empirical.compute_cl(alpha=alpha)
         _cd = empirical.compute_cd(alpha=alpha)
 
         result_cl.append(_cl)
@@ -70,7 +72,10 @@ def test_airfoil_unseen_interpolation(polars):
 
     alphas, polar_cl, polar_cd = polars
 
-    empirical = Airfoil(alpha=alphas, polar_cl=polar_cl, polar_cd=polar_cd)
+    polar_cl = np.column_stack((alphas, polar_cl))
+    polar_cd = np.column_stack((alphas, polar_cd))
+
+    empirical = Airfoil(polar_cl=polar_cl, polar_cd=polar_cd)
 
     alpha0 = 0.5
     result_cl = empirical.compute_cl(alpha0)
