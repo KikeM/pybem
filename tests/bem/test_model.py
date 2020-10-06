@@ -140,7 +140,7 @@ class TestReproduceOutputs:
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [9.448702260173416, 3.198004953641942]
+        expected_forces = [0.06015230682040654, 0.02035913185617931]
 
         assert_allclose(expected_forces, result_forces)
 
@@ -155,6 +155,6 @@ class TestReproduceOutputs:
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [8.633726487035544, 3.0419449911253316]
+        expected_forces = [0.05496400990860528, 0.019365623278049134]
 
         assert_allclose(expected_forces, result_forces)
