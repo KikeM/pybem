@@ -43,7 +43,7 @@ def propeller():
 class TestRun:
     def test_no_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller)
+        bem = BladeElementMethod(_lambda=1, propeller=propeller)
 
         bem.solve()
 
@@ -51,7 +51,9 @@ class TestRun:
 
     def test_with_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+        bem = BladeElementMethod(
+            _lambda=1, propeller=propeller, tip_loss=True, hub_loss=True
+        )
 
         bem.solve()
 
@@ -73,11 +75,11 @@ class TestReproduceOutputs:
     need to be updated.
     """
 
-    J = 0.2
+    _lambda = 0.2
 
     def test_solve_no_losses(self, propeller):
 
-        bem = BladeElementMethod(J=self.J, propeller=propeller)
+        bem = BladeElementMethod(_lambda=self._lambda, propeller=propeller)
 
         bem.N_SECTIONS = 10
 
@@ -103,7 +105,7 @@ class TestReproduceOutputs:
     def test_solve_with_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+            _lambda=self._lambda, propeller=propeller, tip_loss=True, hub_loss=True
         )
 
         bem.N_SECTIONS = 10
@@ -130,7 +132,7 @@ class TestReproduceOutputs:
     def test_forces_no_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=False, hub_loss=False
+            _lambda=self._lambda, propeller=propeller, tip_loss=False, hub_loss=False
         )
 
         bem.solve()
@@ -145,7 +147,7 @@ class TestReproduceOutputs:
     def test_forces_with_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+            _lambda=self._lambda, propeller=propeller, tip_loss=True, hub_loss=True
         )
 
         bem.solve()

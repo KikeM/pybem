@@ -44,9 +44,9 @@ class BladeElementMethod:
     N_SECTIONS = 100
     EPSILON = 1e-6
 
-    def __init__(self, J, propeller, flight=None, tip_loss=False, hub_loss=False):
+    def __init__(self, _lambda, propeller, flight=None, tip_loss=False, hub_loss=False):
 
-        self.J = J
+        self._lambda = _lambda
 
         self.flight = flight
         self.propeller = propeller
@@ -262,12 +262,12 @@ class BladeElementMethod:
         a, b = self.compute_induction_coefficients(r=r, phi=phi)
 
         # Compute residual
-        J = self.J
+        _lambda = self._lambda
 
         phi = np.deg2rad(phi)
 
         SUM_1 = np.sin(phi) / (1.0 + a)
-        SUM_2 = J * np.cos(phi) / (r * (1.0 - b))
+        SUM_2 = _lambda * np.cos(phi) / (r * (1.0 - b))
 
         res = SUM_1 - SUM_2
 
