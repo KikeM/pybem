@@ -111,7 +111,7 @@ class BladeElementMethod:
         return cn
 
     @staticmethod
-    def force_coeff_integrand(r, F, a):
+    def force_coeff_integrand(r, F, a, _lambda):
         """Compute the slope dCT/dr to integrate CT.
 
         Parameters
@@ -119,18 +119,19 @@ class BladeElementMethod:
         r : float
         F : float
         a : float
+        _lambda : float
 
         Returns
         -------
         dCTdr : float
         """
 
-        dCTdr = 8.0 * pi * r * (1.0 + a) * a * F
+        dCTdr = 4.0 * _lambda ** 2.0 * r * (1.0 + a) * a * F
 
         return dCTdr
 
     @staticmethod
-    def torque_coeff_integrand(r, F, a, b, J):
+    def torque_coeff_integrand(r, F, a, b, _lambda):
         """Compute the slope dCT/dr to integrate CT.
 
         Parameters
@@ -146,7 +147,7 @@ class BladeElementMethod:
         dCQdr : float
         """
 
-        dCQdr = 8.0 * pi * (r ** 3.0) * (1.0 + a) * b * F / J
+        dCQdr = 4.0 * _lambda * (r ** 3.0) * (1.0 + a) * b * F
 
         return dCQdr
 
@@ -195,8 +196,10 @@ class BladeElementMethod:
             _F = self.compute_prandtl_loss(r=r, phi=_phi)
             _a, _b = self.compute_induction_coefficients(r=r, phi=_phi)
 
-            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F)
-            _dCQdr = self.torque_coeff_integrand(r=r, a=_a, F=_F, b=_b, J=self.J)
+            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F, _lambda=self._lambda)
+            _dCQdr = self.torque_coeff_integrand(
+                r=r, a=_a, F=_F, b=_b, _lambda=self._lambda
+            )
 
             # Save station values
             F.append(_F)
