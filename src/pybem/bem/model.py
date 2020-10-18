@@ -1,3 +1,4 @@
+from copy import deepcopy
 from functools import partial
 from math import pi
 
@@ -46,7 +47,7 @@ class BladeElementMethod:
 
     def __init__(self, _lambda, propeller, flight=None, tip_loss=False, hub_loss=False):
 
-        self._lambda = _lambda
+        self._lambda = _lambda  # Advance ratio
 
         self.flight = flight
         self.propeller = propeller
@@ -419,3 +420,11 @@ class BladeElementMethod:
         #     phi = np.array(np.nan)
 
         return phi.item()
+
+    @property
+    def axial_velocity_radial_distribution(self):
+
+        _a = deepcopy(self.a_dist)
+        _a = np.array(_a)
+
+        return 1.0 + _a
