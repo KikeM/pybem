@@ -220,6 +220,7 @@ def expected_area(R_c, R0_c0):
 def expected_aspect_ratio(expected_area, R_c):
 
     R, c = R_c
+
     AR = R ** 2.0 / expected_area
 
     return AR
