@@ -44,51 +44,6 @@ def propeller():
 
 
 @pytest.fixture
-def R0_c0():
-    return 0.3, 0.1
-
-
-@pytest.fixture
-def R_c():
-    return 1.2, 0.5
-
-
-def linear_chord(r, R, R0, c, c0):
-    return r * (c - c0) / (R - R0) + (R * c0 - R0 * c) / (R - R0)
-
-
-@pytest.fixture
-def propeller_linear_chord(R_c, R0_c0):
-
-    R, c = R_c
-    R0, c0 = R0_c0
-
-    N = 10
-
-    sections = []
-    for idx, r in enumerate(np.linspace(R0, R, num=N)):
-
-        name = "S" + str(idx)
-        chord = linear_chord(r=r, R=R, R0=R0, c0=c0, c=c)
-
-        _section = Section(
-            name=name,
-            r=r,
-            beta=0,
-            chord=chord,
-            airfoil=BaseAirfoil(),
-        )
-
-        sections.append(_section)
-
-    B = 2
-
-    propeller = Propeller(B=B, sections=sections)
-
-    return propeller
-
-
-@pytest.fixture
 def section():
 
     return Section(r=1.0, beta=0, chord=1.0, airfoil=BaseAirfoil())
@@ -205,13 +160,80 @@ def test_propeller_compute_cd(propeller):
     assert_allclose(expected_cd, result_cd)
 
 
-def test_area(R_c, R0_c0, propeller_linear_chord):
+@pytest.fixture
+def R0_c0():
+    return 0.3, 0.1
+
+
+@pytest.fixture
+def R_c():
+    return 1.2, 0.5
+
+
+def linear_chord(r, R, R0, c, c0):
+    return r * (c - c0) / (R - R0) + (R * c0 - R0 * c) / (R - R0)
+
+
+@pytest.fixture
+def propeller_linear_chord(R_c, R0_c0):
 
     R, c = R_c
     R0, c0 = R0_c0
 
-    result_area = propeller_linear_chord.compute_area()
+    N = 10
+
+    sections = []
+    for idx, r in enumerate(np.linspace(R0, R, num=N)):
+
+        name = "S" + str(idx)
+        chord = linear_chord(r=r, R=R, R0=R0, c0=c0, c=c)
+
+        _section = Section(
+            name=name,
+            r=r,
+            beta=0,
+            chord=chord,
+            airfoil=BaseAirfoil(),
+        )
+
+        sections.append(_section)
+
+    B = 2
+
+    propeller = Propeller(B=B, sections=sections)
+
+    return propeller
+
+
+@pytest.fixture
+def expected_area(R_c, R0_c0):
+
+    R, c = R_c
+    R0, c0 = R0_c0
 
     expected_area = (1.0 / 2.0) * (-R + R0) ** 2.0 * (c + c0) / (R - R0)
 
+    return expected_area
+
+
+@pytest.fixture
+def expected_aspect_ratio(expected_area, R_c):
+
+    R, c = R_c
+    AR = R ** 2.0 / expected_area
+
+    return AR
+
+
+def test_area(expected_area, propeller_linear_chord):
+
+    result_area = propeller_linear_chord.area
+
     assert_allclose(expected_area, result_area, atol=TOL, rtol=TOL)
+
+
+def test_aspect_ratio(expected_aspect_ratio, propeller_linear_chord):
+
+    result_aspect_ratio = propeller_linear_chord.aspect_ratio
+
+    assert_allclose(expected_aspect_ratio, result_aspect_ratio, atol=TOL, rtol=TOL)

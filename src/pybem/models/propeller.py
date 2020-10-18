@@ -283,7 +283,8 @@ class Propeller:
 
         return R * self.compute_chord(r)
 
-    def compute_area(self):
+    @property
+    def area(self):
 
         space = np.linspace(self.R_hub, self.R, num=1000)
         space /= self.R
@@ -295,3 +296,11 @@ class Propeller:
         S = _integrate(dSdr)
 
         return S
+
+    @property
+    def aspect_ratio(self):
+
+        S = self.area
+        AR = self.R ** 2.0 / S
+
+        return AR
