@@ -75,6 +75,8 @@ class TestReproduceOutputs:
     need to be updated.
     """
 
+    TOL = 1e-3
+
     _lambda = 0.2
 
     def test_solve_no_losses(self, propeller):
@@ -100,7 +102,7 @@ class TestReproduceOutputs:
             16.913981930219638,
         ]
 
-        assert_allclose(expected_phi, result_phi)
+        assert_allclose(expected_phi, result_phi, rtol=self.TOL, atol=self.TOL)
 
     def test_solve_with_losses(self, propeller):
 
@@ -127,7 +129,7 @@ class TestReproduceOutputs:
             29.83229695496505,
         ]
 
-        assert_allclose(expected_phi, result_phi)
+        assert_allclose(expected_phi, result_phi, rtol=self.TOL, atol=self.TOL)
 
     def test_forces_no_losses(self, propeller):
 
@@ -142,7 +144,7 @@ class TestReproduceOutputs:
         result_forces = [CT, CQ]
         expected_forces = [0.06015230682040654, 0.02035913185617931]
 
-        assert_allclose(expected_forces, result_forces)
+        assert_allclose(expected_forces, result_forces, atol=self.TOL, rtol=self.TOL)
 
     def test_forces_with_losses(self, propeller):
 
@@ -157,4 +159,4 @@ class TestReproduceOutputs:
         result_forces = [CT, CQ]
         expected_forces = [0.05496400990860528, 0.019365623278049134]
 
-        assert_allclose(expected_forces, result_forces)
+        assert_allclose(expected_forces, result_forces, atol=self.TOL, rtol=self.TOL)
