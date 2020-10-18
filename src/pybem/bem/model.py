@@ -163,6 +163,7 @@ class BladeElementMethod:
             Incidence angles for each r.
         """
 
+        _lambda = self._lambda
         r_min = self.propeller.radii[0]
 
         # Create dimensionless radius distribution
@@ -173,6 +174,7 @@ class BladeElementMethod:
         r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
         self.r_dist = r_dist
 
+        # Initialization
         phi0 = self.propeller.compute_beta(r_min)
         phi = []
         a = []
@@ -180,9 +182,10 @@ class BladeElementMethod:
         dCTdr = []
         dCQdr = []
         F = []
+
         for r in r_dist:
 
-            # (BEM loop)
+            # (BEM loop: START)
             # Solve inflow angle.
             _phi = self.compute_inflow_angle(r=r, phi0=phi0)
 
@@ -190,17 +193,17 @@ class BladeElementMethod:
             phi.append(_phi)
 
             # Update starting point for the next iteration
-            phi0 = _phi
+            phi0 = self.propeller.compute_beta(r)
+            # (BEM loop: END)
 
-            # (Performance calculation loop)
+            # (Performance calculation loop: START)
             # Compute differential force and torque slopes
             _F = self.compute_prandtl_loss(r=r, phi=_phi)
             _a, _b = self.compute_induction_coefficients(r=r, phi=_phi)
 
-            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F, _lambda=self._lambda)
-            _dCQdr = self.torque_coeff_integrand(
-                r=r, a=_a, F=_F, b=_b, _lambda=self._lambda
-            )
+            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F, _lambda=_lambda)
+            _dCQdr = self.torque_coeff_integrand(r=r, a=_a, F=_F, b=_b, _lambda=_lambda)
+            # (Performance calculation loop: END)
 
             # Save station values
             F.append(_F)
