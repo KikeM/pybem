@@ -1,6 +1,9 @@
 from bisect import bisect_left
+from functools import partial
 from math import pi
 
+import numpy as np
+from scipy.integrate import simps as integrate
 from scipy.interpolate import interp1d
 
 
@@ -117,7 +120,8 @@ class Propeller:
         self.R_hub = min(section.r for section in sections)
 
         # Sort sections by ascending order of radius
-        _sections = sorted(sections, key=lambda section: section.r)
+        func_selector = lambda section: section.r
+        _sections = sorted(sections, key=func_selector)
 
         self.sections = []
         dist_r = []
@@ -272,3 +276,22 @@ class Propeller:
         cd = f(r).item()
 
         return cd
+
+    def _dSdr(self, r):
+
+        R = self.R
+
+        return R * self.compute_chord(r)
+
+    def compute_area(self):
+
+        space = np.linspace(self.R_hub, self.R, num=1000)
+        space /= self.R
+
+        _integrate = partial(integrate, x=space)
+
+        dSdr = list(map(self._dSdr, space))
+
+        S = _integrate(dSdr)
+
+        return S
