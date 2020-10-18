@@ -127,13 +127,13 @@ class BladeElementMethod:
         dCTdr : float
         """
 
-        dCTdr = 4.0 * _lambda ** 2.0 * r * (1.0 + a) * a * F
+        dCTdr = 4.0 * (_lambda ** 2.0) * r * (1.0 + a) * a * F
 
         return dCTdr
 
     @staticmethod
     def torque_coeff_integrand(r, F, a, b, _lambda):
-        """Compute the slope dCT/dr to integrate CT.
+        """Compute the slope dCQ/dr to integrate CQ.
 
         Parameters
         ----------
@@ -141,7 +141,7 @@ class BladeElementMethod:
         F : float
         a : float
         b : float
-        J : float
+        _lambda : float
 
         Returns
         -------
