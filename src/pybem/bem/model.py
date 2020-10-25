@@ -1,3 +1,4 @@
+from copy import deepcopy
 from functools import partial
 from math import pi
 
@@ -44,9 +45,9 @@ class BladeElementMethod:
     N_SECTIONS = 100
     EPSILON = 1e-6
 
-    def __init__(self, J, propeller, flight=None, tip_loss=False, hub_loss=False):
+    def __init__(self, _lambda, propeller, flight=None, tip_loss=False, hub_loss=False):
 
-        self.J = J
+        self._lambda = _lambda  # Advance ratio
 
         self.flight = flight
         self.propeller = propeller
@@ -111,7 +112,7 @@ class BladeElementMethod:
         return cn
 
     @staticmethod
-    def force_coeff_integrand(r, F, a):
+    def force_coeff_integrand(r, F, a, _lambda):
         """Compute the slope dCT/dr to integrate CT.
 
         Parameters
@@ -119,19 +120,20 @@ class BladeElementMethod:
         r : float
         F : float
         a : float
+        _lambda : float
 
         Returns
         -------
         dCTdr : float
         """
 
-        dCTdr = 8.0 * pi * r * (1.0 + a) * a * F
+        dCTdr = 4.0 * (_lambda ** 2.0) * r * (1.0 + a) * a * F
 
         return dCTdr
 
     @staticmethod
-    def torque_coeff_integrand(r, F, a, b, J):
-        """Compute the slope dCT/dr to integrate CT.
+    def torque_coeff_integrand(r, F, a, b, _lambda):
+        """Compute the slope dCQ/dr to integrate CQ.
 
         Parameters
         ----------
@@ -139,14 +141,14 @@ class BladeElementMethod:
         F : float
         a : float
         b : float
-        J : float
+        _lambda : float
 
         Returns
         -------
         dCQdr : float
         """
 
-        dCQdr = 8.0 * pi * (r ** 3.0) * (1.0 + a) * b * F / J
+        dCQdr = 4.0 * _lambda * (r ** 3.0) * (1.0 + a) * b * F
 
         return dCQdr
 
@@ -161,6 +163,7 @@ class BladeElementMethod:
             Incidence angles for each r.
         """
 
+        _lambda = self._lambda
         r_min = self.propeller.radii[0]
 
         # Create dimensionless radius distribution
@@ -171,6 +174,7 @@ class BladeElementMethod:
         r_dist = np.linspace(start=start, stop=stop, num=self.N_SECTIONS)
         self.r_dist = r_dist
 
+        # Initialization
         phi0 = self.propeller.compute_beta(r_min)
         phi = []
         a = []
@@ -178,9 +182,10 @@ class BladeElementMethod:
         dCTdr = []
         dCQdr = []
         F = []
+
         for r in r_dist:
 
-            # (BEM loop)
+            # (BEM loop: START)
             # Solve inflow angle.
             _phi = self.compute_inflow_angle(r=r, phi0=phi0)
 
@@ -188,15 +193,17 @@ class BladeElementMethod:
             phi.append(_phi)
 
             # Update starting point for the next iteration
-            phi0 = _phi
+            phi0 = self.propeller.compute_beta(r)
+            # (BEM loop: END)
 
-            # (Performance calculation loop)
+            # (Performance calculation loop: START)
             # Compute differential force and torque slopes
             _F = self.compute_prandtl_loss(r=r, phi=_phi)
             _a, _b = self.compute_induction_coefficients(r=r, phi=_phi)
 
-            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F)
-            _dCQdr = self.torque_coeff_integrand(r=r, a=_a, F=_F, b=_b, J=self.J)
+            _dCTdr = self.force_coeff_integrand(r=r, a=_a, F=_F, _lambda=_lambda)
+            _dCQdr = self.torque_coeff_integrand(r=r, a=_a, F=_F, b=_b, _lambda=_lambda)
+            # (Performance calculation loop: END)
 
             # Save station values
             F.append(_F)
@@ -262,12 +269,12 @@ class BladeElementMethod:
         a, b = self.compute_induction_coefficients(r=r, phi=phi)
 
         # Compute residual
-        J = self.J
+        _lambda = self._lambda
 
         phi = np.deg2rad(phi)
 
         SUM_1 = np.sin(phi) / (1.0 + a)
-        SUM_2 = J * np.cos(phi) / (r * (1.0 - b))
+        SUM_2 = _lambda * np.cos(phi) / (r * (1.0 - b))
 
         res = SUM_1 - SUM_2
 
@@ -416,3 +423,11 @@ class BladeElementMethod:
         #     phi = np.array(np.nan)
 
         return phi.item()
+
+    @property
+    def axial_velocity_radial_distribution(self):
+
+        _a = deepcopy(self.a_dist)
+        _a = np.array(_a)
+
+        return 1.0 + _a

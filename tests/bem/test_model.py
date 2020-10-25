@@ -43,7 +43,7 @@ def propeller():
 class TestRun:
     def test_no_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller)
+        bem = BladeElementMethod(_lambda=1, propeller=propeller)
 
         bem.solve()
 
@@ -51,7 +51,9 @@ class TestRun:
 
     def test_with_losses(self, propeller):
 
-        bem = BladeElementMethod(J=1, propeller=propeller, tip_loss=True, hub_loss=True)
+        bem = BladeElementMethod(
+            _lambda=1, propeller=propeller, tip_loss=True, hub_loss=True
+        )
 
         bem.solve()
 
@@ -73,11 +75,13 @@ class TestReproduceOutputs:
     need to be updated.
     """
 
-    J = 0.2
+    TOL = 1e-3
+
+    _lambda = 0.2
 
     def test_solve_no_losses(self, propeller):
 
-        bem = BladeElementMethod(J=self.J, propeller=propeller)
+        bem = BladeElementMethod(_lambda=self._lambda, propeller=propeller)
 
         bem.N_SECTIONS = 10
 
@@ -98,12 +102,12 @@ class TestReproduceOutputs:
             16.913981930219638,
         ]
 
-        assert_allclose(expected_phi, result_phi)
+        assert_allclose(expected_phi, result_phi, rtol=self.TOL, atol=self.TOL)
 
     def test_solve_with_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+            _lambda=self._lambda, propeller=propeller, tip_loss=True, hub_loss=True
         )
 
         bem.N_SECTIONS = 10
@@ -125,12 +129,12 @@ class TestReproduceOutputs:
             29.83229695496505,
         ]
 
-        assert_allclose(expected_phi, result_phi)
+        assert_allclose(expected_phi, result_phi, rtol=self.TOL, atol=self.TOL)
 
     def test_forces_no_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=False, hub_loss=False
+            _lambda=self._lambda, propeller=propeller, tip_loss=False, hub_loss=False
         )
 
         bem.solve()
@@ -138,14 +142,14 @@ class TestReproduceOutputs:
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [9.448702260173416, 3.198004953641942]
+        expected_forces = [0.06015230682040654, 0.02035913185617931]
 
-        assert_allclose(expected_forces, result_forces)
+        assert_allclose(expected_forces, result_forces, atol=self.TOL, rtol=self.TOL)
 
     def test_forces_with_losses(self, propeller):
 
         bem = BladeElementMethod(
-            J=self.J, propeller=propeller, tip_loss=True, hub_loss=True
+            _lambda=self._lambda, propeller=propeller, tip_loss=True, hub_loss=True
         )
 
         bem.solve()
@@ -153,6 +157,6 @@ class TestReproduceOutputs:
         CT, CQ = bem.integrate_forces()
 
         result_forces = [CT, CQ]
-        expected_forces = [8.633726487035544, 3.0419449911253316]
+        expected_forces = [0.05496400990860528, 0.019365623278049134]
 
-        assert_allclose(expected_forces, result_forces)
+        assert_allclose(expected_forces, result_forces, atol=self.TOL, rtol=self.TOL)

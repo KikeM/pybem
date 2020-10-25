@@ -9,5 +9,5 @@ setup(
     author_email="enrique.millanvalbuena@gmail.com",
     packages=find_packages("src"),
     package_dir={"": "src"},
-    install_requires=["numpy", "scipy", "pandas", "fluids"],
+    install_requires=["numpy", "scipy", "fluids"],
 )
